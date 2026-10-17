@@ -1,0 +1,974 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="N5 단어">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F3F5F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12151C" media="(prefers-color-scheme: dark)">
+<title>N5 단어</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&display=swap">
+<style>
+:root{
+  --bg:#F3F5F4; --card:#FFFFFF; --ink:#1E2330; --muted:#6A7180; --line:#DFE3EA; --soft:#EEF1F5;
+  --ai:#2B4785; --ai-ink:#FFFFFF; --ai-soft:#E5EBF7;
+  --red:#CF3A2C; --red-soft:#FBE8E5; --ok:#23784A; --ok-soft:#E3F3EA;
+  --jp:"Klee One","Hiragino Mincho ProN","Yu Mincho",serif;
+  --ui:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#12151C; --card:#1B1F29; --ink:#E7E9EE; --muted:#9AA1B0; --line:#2C3242; --soft:#232837;
+  --ai:#93ABEA; --ai-ink:#0F1423; --ai-soft:#23314F;
+  --red:#F27464; --red-soft:#3B2321; --ok:#6CC495; --ok-soft:#1D3528; color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.5;
+  padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+  min-height:100dvh}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;touch-action:manipulation}
+button:focus-visible,input:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+.screen{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.jp{font-family:var(--jp);font-weight:600}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+.num{font-variant-numeric:tabular-nums}
+
+/* top bars */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
+.top h1{margin:0;font-size:24px;letter-spacing:-.01em}
+.top h2{margin:0;font-size:18px;flex:1;text-align:center}
+.back,.link{color:var(--ai);font-size:16px;padding:10px 4px;min-width:60px;text-align:left}
+.link{text-align:right}
+
+/* cards & buttons */
+.card{background:var(--card);border-radius:16px;padding:18px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:54px;border-radius:14px;font-weight:600;font-size:17px}
+.btn.primary{background:var(--ai);color:var(--ai-ink)}
+.btn.plain{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn.quiet{background:none;color:var(--muted);font-weight:500;min-height:46px}
+.btn:disabled{opacity:.4}
+.btn.sm{min-height:40px;font-size:15px;width:auto;padding:0 16px;border-radius:10px}
+
+/* home */
+.today{display:flex;align-items:center;gap:16px}
+.ring{--p:0;width:76px;height:76px;border-radius:50%;flex:none;display:grid;place-content:center;text-align:center;
+  background:radial-gradient(closest-side,var(--card) 79%,transparent 81% 100%),conic-gradient(var(--ai) calc(var(--p)*1%),var(--soft) 0)}
+.ring b{font-size:22px;line-height:1} .ring span{font-size:12px;color:var(--muted)}
+.ring.done{background:radial-gradient(closest-side,var(--card) 79%,transparent 81% 100%),conic-gradient(var(--red) 100%,var(--soft) 0)}
+.ring.done b{color:var(--red);font-family:var(--jp);font-size:24px}
+.today h3{margin:0;font-size:17px}
+.today p{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.streak{color:var(--red);font-weight:700}
+.tile{background:var(--card);border-radius:16px;padding:16px;text-align:left;display:flex;flex-direction:column;gap:2px;min-height:76px}
+.tile b{font-size:17px}
+.tile span{font-size:14px;color:var(--muted)}
+.tile .badge{color:var(--red);font-weight:700}
+.bar{height:8px;border-radius:4px;background:var(--soft);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:4px}
+.progress{display:flex;flex-direction:column;gap:8px}
+.progress .row{display:flex;justify-content:space-between;font-size:14px}
+
+/* segmented options */
+.opt{display:flex;flex-direction:column;gap:8px}
+.opt label{font-size:14px;color:var(--muted);font-weight:600}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{flex:1 1 auto;min-height:46px;padding:0 14px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:15px}
+.seg button[aria-pressed="true"]{background:var(--ai);color:var(--ai-ink);border-color:var(--ai);font-weight:600}
+.hint{font-size:13px;color:var(--muted);margin:0}
+
+/* quiz */
+.qbar{display:flex;align-items:center;gap:12px}
+.qbar .x{font-size:15px;color:var(--muted);padding:10px 2px}
+.qbar .bar{flex:1}
+.qbar .bar i{background:var(--ai)}
+.qbar .count{font-size:14px;color:var(--muted);min-width:44px;text-align:right}
+.prompt{position:relative;background:var(--card);border-radius:18px;padding:36px 16px 26px;text-align:center;overflow:hidden}
+.prompt .tag{font-size:12px;font-weight:600;color:var(--ai);background:var(--ai-soft);padding:3px 10px;border-radius:999px;display:inline-block;margin-bottom:10px}
+.prompt .big{font-family:var(--jp);font-weight:600;font-size:clamp(40px,12vw,64px);line-height:1.2;overflow-wrap:anywhere}
+.prompt .big.ko{font-family:var(--ui);font-size:clamp(28px,8vw,40px)}
+.prompt .big.sent{font-size:clamp(22px,6vw,30px);line-height:1.6}
+.prompt .sub{color:var(--muted);margin-top:6px}
+.prompt .ask{color:var(--muted);font-size:14px;margin-top:12px}
+.mark{position:absolute;right:12px;top:10px;width:80px;height:80px;pointer-events:none}
+.mark path{fill:none;stroke:var(--red);stroke-width:7;stroke-linecap:round}
+.choices{display:grid;grid-template-columns:1fr;gap:10px}
+@media (min-width:600px){.choices{grid-template-columns:1fr 1fr}}
+.choice{background:var(--card);border:1.5px solid var(--line);border-radius:14px;min-height:60px;padding:12px 16px;text-align:left;font-size:18px;display:flex;align-items:center}
+.choice.jp{font-size:23px}
+.choice .rd{display:block;font-family:var(--ui);font-size:13px;color:var(--muted);font-weight:500;line-height:1.3}
+.prompt .sub.jp{font-size:20px;color:var(--muted)}
+.choice.right{border-color:var(--ok);background:var(--ok-soft)}
+.choice.wrong{border-color:var(--red);background:var(--red-soft)}
+.choice.dim{opacity:.45}
+.typein{display:flex;gap:8px}
+.typein input{flex:1;min-width:0;font-size:20px;padding:14px;border-radius:14px;border:1.5px solid var(--line);background:var(--card)}
+.typein input.right{border-color:var(--ok);background:var(--ok-soft)} .typein input.wrong{border-color:var(--red);background:var(--red-soft)}
+.typein .btn{width:auto;padding:0 20px}
+.ans{background:var(--card);border-radius:14px;padding:14px 16px;border-left:4px solid var(--ok)}
+.ans.ng{border-left-color:var(--red)}
+.ans .v{font-size:13px;font-weight:700;color:var(--ok)} .ans.ng .v{color:var(--red)}
+.ans .w{font-family:var(--jp);font-weight:600;font-size:24px}
+.ans .r{color:var(--muted)}
+.ans p{margin:4px 0 0;font-size:15px}
+.tipline{background:var(--red-soft);border-radius:8px;padding:8px 10px;font-size:14px!important}
+.others{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.olabel{font-size:12px;color:var(--muted);font-weight:600}
+.orow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:baseline;font-size:14px}
+.orow .jp{font-size:17px;min-width:4em}
+
+/* lists */
+.list{background:var(--card);border-radius:16px;overflow:hidden}
+.item{display:flex;align-items:center;gap:12px;padding:14px 16px;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .main{flex:1;min-width:0}
+.item .w{font-family:var(--jp);font-weight:600;font-size:20px;line-height:1.35}
+.item .w small{font-size:14px;color:var(--muted);margin-left:6px}
+.item .m{font-size:14px;color:var(--muted)}
+.item .miss{font-size:12px;color:var(--red);font-weight:700}
+.empty{text-align:center;color:var(--muted);padding:32px 16px;font-size:15px}
+
+/* result */
+.score{text-align:center;padding:28px 16px}
+.stamp{width:120px;height:120px;margin:0 auto 12px;border:4px solid var(--red);border-radius:50%;display:grid;place-content:center;color:var(--red);transform:rotate(-8deg)}
+.stamp b{font-size:30px;line-height:1}
+.stamp span{font-family:var(--jp);font-weight:600;font-size:14px}
+
+/* photo */
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.thumb{position:relative;width:72px;height:92px;border-radius:8px;overflow:hidden;background:var(--soft)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb button{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:var(--card);font-size:13px}
+.file{position:relative;overflow:hidden}
+.file input{position:absolute;inset:0;opacity:0}
+.field{width:100%;font-size:16px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card)}
+textarea.field{min-height:110px;font-family:ui-monospace,monospace;font-size:13px}
+.status{font-size:14px;color:var(--muted);text-align:center;margin:0}
+.status.err{color:var(--red)}
+.row2{display:flex;gap:8px}
+.dash{display:flex;flex-direction:column;gap:16px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpis div{display:flex;flex-direction:column}
+.kpis span{font-size:12px;color:var(--muted)}
+.kpis b{font-size:26px;line-height:1.15;font-weight:700}
+.kpis small{font-size:14px;color:var(--muted);font-weight:500;margin-left:1px}
+.kpis b.hot{color:var(--red)}
+.progline{display:flex;flex-direction:column;gap:6px}
+.progline .bar i{background:var(--ai)} .progline .bar i.met{background:var(--red)}
+.charthead{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted);margin-bottom:6px;flex-wrap:wrap}
+.charthead>span:last-child{color:var(--ink)}
+.legend{margin-left:6px;color:var(--muted);font-size:12px}
+.chart{width:100%;height:auto;display:block;overflow:visible}
+.chart .axis{stroke:var(--line);stroke-width:1}
+.chart .goal{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3;opacity:.7}
+.chart .goaltxt{fill:var(--muted);font-size:9px}
+.chart .xl{fill:var(--muted);font-size:9px} .chart .xl.on{fill:var(--ink);font-weight:700}
+.chart .hit{fill:transparent;cursor:pointer}
+.chart .barm{fill:var(--ai);opacity:.45}
+.chart .barm.met{opacity:.8}
+.chart .day.sel .barm{opacity:1}
+.chart .zero{fill:var(--line)}
+.sec{display:flex;flex-direction:column;gap:8px}
+.sec h3{margin:6px 2px 0;font-size:15px}
+.hbars{display:flex;flex-direction:column;gap:10px}
+.hb{display:grid;grid-template-columns:minmax(84px,auto) 1fr 44px;align-items:center;gap:10px;width:100%}
+.hl{font-size:14px} .hv{font-size:14px;text-align:right;color:var(--ink)}
+.ht{height:10px;background:var(--soft);border-radius:5px;overflow:hidden}
+.ht i{display:block;height:100%;background:var(--ai);border-radius:5px}
+.item.col{flex-direction:column;align-items:stretch;gap:6px}
+.item.col .btn{align-self:flex-start}
+.coach p{margin:0 0 6px;font-size:15px;line-height:1.6}
+code{font-family:ui-monospace,monospace;font-size:13px;background:var(--soft);padding:1px 5px;border-radius:4px}
+details summary{cursor:pointer}
+.menu{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (min-width:700px){.menu{grid-template-columns:repeat(4,1fr)}}
+.bookbtn{display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-width:0}
+.bookbtn h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70vw}
+.bookbtn span{font-size:12px;color:var(--ai);margin-top:-2px}
+.pickbook{display:flex;align-items:center;gap:12px;text-align:left;min-height:44px}
+.radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none}
+.radio.on{border:6px solid var(--ai)}
+.row2>*{flex:1}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ===== 설정: Supabase 연결 (기기 간 동기화 + AI 기능) =====
+   Supabase 대시보드 > Project Settings > API(또는 API Keys)에서 복사해 넣으세요.
+   anon / publishable 키는 공개돼도 되는 키예요. service_role / secret 키는 절대 넣지 마세요. */
+const SUPABASE_URL = 'https://cyeftdiyaroxtmtjcahv.supabase.co';   // 예: 'https://abcdxyz.supabase.co'
+const SUPABASE_KEY = 'sb_publishable_hwgcP55ejfxgwBDQkj-9nw_hSihzf-N';   // 예: 'eyJhbGciOi...' 또는 'sb_publishable_...'
+
+const RAW = [[1,"会う","만나다","to meet","あう","会う"],[2,"青い","푸른","blue","あおい","青い"],[3,"赤い","빨간","red","あかい","赤い"],[4,"明い","선명한","bright","あかるい","明い"],[5,"秋","가을","autumn","あき","秋"],[6,"開く","열리다","to open, to become open","あく","開く"],[7,"開ける","열기","to open","あける","開ける"],[8,"上げる","주다","to give","あげる","上げる"],[9,"朝","아침","morning","あさ","朝"],[10,"朝御飯","아침밥","breakfast","あさごはん","朝御飯"],[11,"あさって","모레","day after tomorrow","あさって",""],[12,"足","다리","foot, leg","あし","足"],[13,"明日","내일","tomorrow","あした","明日"],[14,"あそこ","저기","over there","あそこ",""],[15,"遊ぶ","놀다","to play, to make a visit","あそぶ","遊ぶ"],[16,"暖かい","따뜻한","warm","あたたかい","暖かい"],[17,"頭","머리","head","あたま","頭"],[18,"新しい","새로운","new","あたらしい","新しい"],[19,"あちら","저쪽","there","あちら",""],[20,"暑い","덥다","hot","あつい","暑い"],[21,"熱い","뜨거다","hot to the touch","あつい","熱い"],[22,"厚い","두꺼다","kind, deep, thick","あつい","厚い"],[23,"あっち","저기","over there","あっち",""],[24,"後","나중에","afterwards","あと","後"],[25,"あなた","당신","you","あなた",""],[26,"兄","형","(humble) older brother","あに","兄"],[27,"姉","언니","(humble) older sister","あね","姉"],[28,"あの","그","that over there","あの",""],[29,"あの","음 ...","um...","あの",""],[30,"アパート","아파트","apartment","アパート",""],[31,"あびる","목욕하다","to bathe, to shower","あびる",""],[32,"危ない","위험하다","dangerous","あぶない","危ない"],[33,"甘い","달콤한","sweet","あまい","甘い"],[34,"あまり","별로","not very","あまり",""],[35,"雨","비","rain","あめ","雨"],[36,"飴","사탕","candy","あめ","飴"],[37,"洗う","씻다","to wash","あらう","洗う"],[38,"ある","있다","to be,to have (used for inanimate objects)","ある",""],[39,"歩く","걷다","to walk","あるく","歩く"],[40,"あれ","그것","that","あれ",""],[41,"いい","좋은","good","いい",""],[42,"いいえ","아니오","no","いいえ",""],[43,"言う","말","to say","いう","言う"],[44,"家","집","house","いえ","家"],[45,"いかが","어떻게","how","いかが",""],[46,"行く","가다","to go","いく","行く"],[47,"いくつ","몇","how many?,how old?","いくつ",""],[48,"いくら","얼마","how much?","いくら",""],[49,"池","연못","pond","いけ","池"],[50,"医者","의사","medical doctor","いしゃ","医者"],[51,"いす","의자","chair","いす",""],[52,"忙しい","바쁘다","busy, irritated","いそがしい","忙しい"],[53,"痛い","아프다","painful","いたい","痛い"],[54,"一","일","one","いち","一"],[55,"一日","일일","first of the month","いちにち","一日"],[56,"いちばん","가장","best, first","いちばん",""],[57,"いつ","언제","when","いつ",""],[58,"五日","5 일","five days, fifth day","いつか","五日"],[59,"一緒","함께","together","いっしょ","一緒"],[60,"五つ","다섯","five","いつつ","五つ"],[61,"いつも","항상","always","いつも",""],[62,"犬","개","dog","いぬ","犬"],[63,"今","지금","now","いま","今"],[64,"意味","의미","meaning","いみ","意味"],[65,"妹","여동생","(humble) younger sister","いもうと","妹"],[66,"嫌","싫음","unpleasant","いや","嫌"],[67,"入口","입구","entrance","いりぐち","入口"],[68,"居る","있다","to be, to have (used for people and animals)","いる","居る"],[69,"要る","필요하다","to need","いる","要る"],[70,"入れる","넣다","to put in","いれる","入れる"],[71,"色","색","colour","いろ","色"],[72,"いろいろ","여러가지","various","いろいろ",""],[73,"上","위","on top of","うえ","上"],[74,"後ろ","뒤에","behind","うしろ","後ろ"],[75,"薄い","얇다","thin,weak","うすい","薄い"],[76,"歌","노래","song","うた","歌"],[77,"歌う","노래하다","to sing","うたう","歌う"],[78,"生まれる"," 태어나다","to be born","うまれる","生まれる"],[79,"海","바다","sea","うみ","海"],[80,"売る","팔다","to sell","うる","売る"],[81,"煩い","시끄럽다","noisy, annoying","うるさい","煩い"],[82,"上着","겉옷","jacket","うわぎ","上着"],[83,"絵","그림","picture","え","絵"],[84,"映画","영화","movie","えいが","映画"],[85,"映画館","영화관","cinema","えいがかん","映画館"],[86,"英語","영어","English language","えいご","英語"],[87,"ええ","예","yes","ええ",""],[88,"駅","역","station","えき","駅"],[89,"エレベーター","엘리베이터","elevator","エレベーター",""],[90,"鉛筆","연필","pencil","えんぴつ","鉛筆"],[91,"おいしい","맛있는","delicious","おいしい",""],[92,"多い","많은","many","おおい","多い"],[93,"大きい","큰","big","おおきい","大きい"],[94,"大きな","큰","big","おおきな","大きな"],[95,"大勢","대세","great number of people","おおぜい","大勢"],[96,"お母さん","엄마","(honorable) mother","おかあさん","お母さん"],[97,"お菓子","과자","sweets, candy","おかし","お菓子"],[98,"お金","돈","money","おかね","お金"],[99,"起きる","일어나다","to get up","おきる","起きる"],[100,"置く","두다","to put","おく","置く"],[101,"奥さん","부인","(honorable) wife","おくさん","奥さん"],[102,"お酒","술","alcohol, rice wine","おさけ","お酒"],[103,"お皿","접시","plate, dish","おさら","お皿"],[104,"伯父さん","할아버지","grandfather, male senior citizen","おじいさん","伯父"],[105,"教える","가르치다","to teach, to tell","おしえる","教える"],[106,"伯父さん","아저씨","uncle, middle aged gentleman","おじさん","伯父"],[107,"押す","밀다","to push, to stamp something","おす","押す"],[108,"遅い","늦다","late, slow","おそい","遅い"],[109,"お茶","차","green tea","おちゃ","お茶"],[110,"お手洗い","화장실","bathroom","おてあらい","お手洗い"],[111,"お父さん","아버지","(honorable) father","おとうさん","お父さん"],[112,"弟","동생","younger brother","おとうと","弟"],[113,"男","남자","Man","おとこ","男"],[114,"男の子","소년","Boy","おとこのこ","男の子"],[115,"一昨日","그저께","day before yesterday","おととい","一昨日"],[116,"一昨年","지난해","year before last","おととし","一昨年"],[117,"大人","성인","Adult","おとな","大人"],[118,"おなか","배","stomach","おなか",""],[119,"同じ","같은","same","おなじ","同じ"],[120,"お兄さん","형","(honorable) older brother","おにいさん","お兄さん"],[121,"お姉さん","언니","(honorable) older sister","おねえさん","お姉さん"],[122,"おばあさん","할머니","grandmother, female senior-citizen","おばあさん",""],[123,"伯母さん","아주머니","Aunt","おばさん","伯母さん/叔母さん"],[124,"お風呂","목욕","Bath","おふろ","お風呂"],[125,"お弁当","도시락","boxed lunch","おべんとう","お弁当"],[126,"覚える","기억하다","to remember","おぼえる","覚える"],[127,"おまわりさん","경찰","friendly term for policeman","おまわりさん",""],[128,"重い","무거운","Heavy","おもい","重い"],[129,"おもしろい","재미","Interesting","おもしろい",""],[130,"泳ぐ","수영","to swim","およぐ","泳ぐ"],[131,"降りる","내리다","to get off, to descend","おりる","降りる"],[132,"終る","끝나다","to finish","おわる","終る"],[133,"音楽","음악","Music","おんがく","音楽"],[134,"女","여자","Woman","おんな","女"],[135,"女の子","소녀","Girl","おんなのこ","女の子"],[136,"外国","외국","foreign country","がいこく","外国"],[137,"外国人","외국인","Foreigner","がいこくじん","外国人"],[138,"会社","회사","Company","かいしゃ","会社"],[139,"階段","계단","Stairs","かいだん","階段"],[140,"買い物","쇼핑","Shopping","かいもの","買い物"],[141,"買う","구매","to buy","かう","買う"],[142,"返す","반환하다","to return something","かえす","返す"],[143,"帰る","돌아","to go back","かえる","帰る"],[144,"かかる","걸리다","to take time or money","かかる",""],[145,"かぎ","열쇠","Key","かぎ",""],[146,"書く","쓰기","to write","かく","書く"],[147,"学生","학생","Student","がくせい","学生"],[148,"かける","걸다","to call by phone","かける",""],[149,"傘","우산","Umbrella","かさ","傘"],[150,"貸す","빌려","to lend","かす","貸す"],[151,"風","바람","Wind","かぜ","風"],[152,"風邪","감기","a cold","かぜ","風邪"],[153,"家族","가족","Family","かぞく","家族"],[154,"方","방법","person, way of doing","かた","方"],[155,"学校","학교","School","がっこう","学校"],[156,"カップ","컵","Cup","カップ",""],[157,"家庭","가정","Household","かてい","家庭"],[158,"角","모서리","a corner","かど","角"],[159,"かばん","가방","bag, basket","かばん",""],[160,"花瓶","꽃병","a vase","かびん","花瓶"],[161,"紙","종이","paper","かみ","紙"],[162,"カメラ","카메라","camera","カメラ",""],[163,"火曜日","화요일","Tuesday","かようび","火曜日"],[164,"辛い","맵다","Spicy","からい","辛い"],[165,"体","몸","Body","からだ","体"],[166,"借りる","빌리다","to borrow","かりる","借りる"],[167,"軽い","가볍다","Light","かるい","軽い"],[168,"カレー","카레","Curry","カレー",""],[169,"カレンダー","달력","calendar","カレンダー",""],[170,"川","강","River","かわ","川/河"],[171,"かわいい","귀엽다","Cute","かわいい",""],[172,"漢字","한자","Chinese character","かんじ","漢字"],[173,"木","나무","tree, wood","き","木"],[174,"黄色い","노랗다","yellow","きいろい","黄色い"],[175,"消える","사라","to disappear","きえる","消える"],[176,"聞く","듣다","to hear, to listen to, to ask","きく","聞く"],[177,"北","북","North","きた","北"],[178,"ギター","기타","Guitar","ギター",""],[179,"汚い","더러운","Dirty","きたない","汚い"],[180,"喫茶店","커피숖","coffee lounge","きっさてん","喫茶店"],[181,"切手","우표","postage stamp","きって","切手"],[182,"切符","티켓","Ticket","きっぷ","切符"],[183,"昨日","어제","Yesterday","きのう","昨日"],[184,"九","아홉","Nine","きゅう","九"],[185,"牛肉","쇠고기","Beef","ぎゅうにく","牛肉"],[186,"牛乳","우유","Milk","ぎゅうにゅう","牛乳"],[187,"今日","오늘","Today","きょう","今日"],[188,"教室","교실","Classroom","きょうしつ","教室"],[189,"兄弟","형제","(humble) siblings","きょうだい","兄弟"],[190,"去年","작년","last year","きょねん","去年"],[191,"嫌い","싫음","Hate","きらい","嫌い"],[192,"切る","자르다","to cut","きる","切る"],[193,"着る","옷을 입다","to put on from the shoulders down","きる","着る"],[194,"きれい","예쁨","pretty, clean","きれい",""],[195,"キロ","킬로그램","Kilogram","キロ",""],[196,"キロ","킬로미터","Kilometer","キロ",""],[197,"銀行","은행","Bank","ぎんこう","銀行"],[198,"金曜日","금요일","Friday","きんようび","金曜日"],[199,"薬","약","medicine","くすり","薬"],[200,"ください","~해 주세요","Please","ください",""],[201,"果物","과일","Fruit","くだもの","果物"],[202,"口","입","mouth, opening","くち","口"],[203,"靴","신발","Shoes","くつ","靴"],[204,"靴下","양말","Socks","くつした","靴下"],[205,"国","국가","Country","くに","国"],[206,"曇り","흐림","cloudy weather","くもり","曇り"],[207,"曇る","흐리다","to become cloudy, to become dim","くもる","曇る"],[208,"暗い","어둡다","Gloomy","くらい","暗い"],[209,"クラス","클래스","Class","クラス",""],[210,"グラム","그램","Gram","グラム",""],[211,"来る","오다","to come","くる","来る"],[212,"車","자동차","car, vehicle","くるま","車"],[213,"黒","검정","Black","くろ","黒"],[214,"黒い","검은","black","くろい","黒い"],[215,"警官","경찰","policeman","けいかん","警官"],[216,"今朝","오늘 아침","this morning","けさ","今朝"],[217,"消す","지우","to erase, to turn off power","けす","消す"],[218,"結構","훌륭함","splendid, enough","けっこう","結構"],[219,"結婚","결혼","Marriage","けっこん","結婚"],[220,"月曜日","월요일","Monday","げつようび","月曜日"],[221,"玄関","현관","entry hall","げんかん","玄関"],[222,"元気","건강","health, vitality","げんき","元気"],[223,"五","다섯","Five","ご","五"],[224,"公園","공원","Park","こうえん","公園"],[225,"交差点","교차로","intersection","こうさてん","交差点"],[226,"紅茶","차","black tea","こうちゃ","紅茶"],[227,"交番","파출소","police box","こうばん","交番"],[228,"声","목소리","Voice","こえ","声"],[229,"コート","코트","coat, tennis court","コート",""],[230,"コーヒー","커피","Coffee","コーヒー",""],[231,"ここ","여기","Here","ここ",""],[232,"午後","오후","afternoon","ごご","午後"],[233,"九日","9일","nine days, ninth day","ここのか","九日"],[234,"九つ","아홉","Nine","ここのつ","九つ"],[235,"午前","오전","morning","ごぜん","午前"],[236,"答える","대답하다","to answer","こたえる","答える"],[237,"こちら","이쪽","this person or way","こちら",""],[238,"こっち","여기","this person or way","こっち",""],[239,"コップ","컵","a glass","コップ",""],[240,"今年","올해","this year","ことし","今年"],[241,"言葉","말","word, language","ことば","言葉"],[242,"子供","아이","Child","こども","子供"],[243,"この","이","This","この",""],[244,"御飯","밥","cooked rice, meal","ごはん","御飯"],[245,"コピーする","복사","to copy","コピーする",""],[246,"困る","곤란하다","to be worried","こまる","困る"],[247,"これ","이것","This","これ",""],[248,"今月","금월","this month","こんげつ","今月"],[249,"今週","이번 주","this week","こんしゅう","今週"],[250,"こんな","이러한","Such","こんな",""],[251,"今晩","오늘 밤","this evening","こんばん","今晩"],[252,"さあ","잘…","well…","さあ",""],[253,"財布","지갑","Wallet","さいふ","財布"],[254,"魚","물고기","Fish","さかな","魚"],[255,"先","앞","the future, previous","さき","先"],[256,"咲く","피다","to bloom","さく","咲く"],[257,"作文","작문","composition, writing","さくぶん","作文"],[258,"差す","가리다","to stretch out hands, to raise an umbrella","さす","差す"],[259,"雑誌","잡지","Magazine","ざっし","雑誌"],[260,"砂糖","설탕","Sugar","さとう","砂糖"],[261,"寒い","춥다","Cold","さむい","寒い"],[262,"さ来年","다음 해","year after next","さらいねん","さ来年"],[263,"三","셋","Three","さん","三"],[264,"散歩する","산책","to stroll","さんぽする","散歩"],[265,"四","넷","Four","し","四"],[266,"塩","소금","Salt","しお","塩"],[267,"しかし","그러나","However","しかし",""],[268,"時間","시간","Time","じかん","時間"],[269,"仕事","일","Job","しごと","仕事"],[270,"辞書","사전","Dictionary","じしょ","辞書"],[271,"静か","조용","Quiet","しずか","静か"],[272,"下","아래","Below","した","下"],[273,"七","칠","Seven","しち","七"],[274,"質問","질문","Question","しつもん","質問"],[275,"自転車","자전거","Bicycle","じてんしゃ","自転車"],[276,"自動車","자동차","Automobile","じどうしゃ","自動車"],[277,"死ぬ","죽다","to die","しぬ","死ぬ"],[278,"字引","사전","Dictionary","じびき","字引"],[279,"自分","자신","Oneself","じぶん","自分"],[280,"閉まる","꼭 닫히다","to close, to be closed","しまる","閉まる"],[281,"閉める","닫다","to close something","しめる","閉める"],[282,"締める","닫다","to tie","しめる","締める"],[283,"じゃ","그럼","well then…","じゃ",""],[284,"写真","사진","photograph","しゃしん","写真"],[285,"シャツ","셔츠","Shirt","シャツ",""],[286,"シャワー","샤워","Shower","シャワー",""],[287,"十","십","Ten","じゅう","十"],[288,"授業","수업","lesson, class work","じゅぎょう","授業"],[289,"宿題","숙제","homework","しゅくだい","宿題"],[290,"上手","잘","Skillful","じょうず","上手"],[291,"丈夫","건강함","strong, durable","じょうぶ","丈夫"],[292,"しょうゆ","간장","soy sauce","しょうゆ",""],[293,"食堂","식당","dining hall","しょくどう","食堂"],[294,"知る","알","to know","しる","知る"],[295,"白い","하얀","White","しろい","白い"],[296,"新聞","신문","newspaper","しんぶん","新聞"],[297,"水曜日","수요일","Wednesday","すいようび","水曜日"],[298,"吸う","들이마시다","to smoke, to suck","すう","吸う"],[299,"スカート","스커트","Skirt","スカート",""],[300,"好き","좋아함","Likeable","すき","好き"],[301,"少ない","적다","a few","すくない","少ない"],[302,"すぐに","즉시","Instantly","すぐに",""],[303,"少し","조금","Few","すこし","少し"],[304,"涼しい","차가운","Refreshing","すずしい","涼しい"],[305,"ストーブ","스토브","Heater","ストーブ",""],[306,"スプーン","숟가락","Spoon","スプーン",""],[307,"スポーツ","스포츠","Sport","スポーツ",""],[308,"ズボン","바지","Trousers","ズボン",""],[309,"住む","살다","to live in","すむ","住む"],[310,"スリッパ","슬리퍼","Slippers","スリッパ",""],[311,"する","하다","to do","する",""],[312,"座る","앉다","to sit","すわる","座る"],[313,"背","키","height, stature","せ","背"],[314,"生徒","학생","Pupil","せいと","生徒"],[315,"セーター","스웨터","sweater, jumper","セーター",""],[316,"せっけん","경제","Economy","せっけん",""],[317,"背広","정장","business suit","せびろ","背広"],[318,"狭い","좁다","Narrow","せまい","狭い"],[319,"ゼロ","제로","Zero","ゼロ",""],[320,"千","천","Thousand","せん","千"],[321,"先月","지난 달","last month","せんげつ","先月"],[322,"先週","지난","last week","せんしゅう","先週"],[323,"先生","선생님","teacher, doctor","せんせい","先生"],[324,"洗濯","세탁","Washing","せんたく","洗濯"],[325,"全部","전체","All","ぜんぶ","全部"],[326,"掃除する","청소하다","to clean, to sweep","そうじする","掃除"],[327,"そうして","그리고","And","そうして",""],[328,"そこ","거기","that place","そこ",""],[329,"そちら","그 쪽","over there","そちら",""],[330,"そっち","그쪽","over there","そっち",""],[331,"外","외부","Outside","そと","外"],[332,"その","그","That","その",""],[333,"そば","옆","near, beside","そば",""],[334,"空","하늘","Sky","そら","空"],[335,"それ","그것","that","それ",""],[336,"それから","그 다음에","after that","それから",""],[337,"それでは","그러면","in that situation","それでは",""],[338,"大学","대학","university","だいがく","大学"],[339,"大使館","대사관","embassy","たいしかん","大使館"],[340,"大丈夫","괜찮아","all right","だいじょうぶ","大丈夫"],[341,"大好き","매우 좋음","to be very likeable","だいすき","大好き"],[342,"大切","중요","important","たいせつ","大切"],[343,"台所","부엌","kitchen","だいどころ","台所"],[344,"たいへん","몹시","very","たいへん",""],[345,"たいへん","큰일","difficult situation","たいへん",""],[346,"高い","높다","tall, expensive","たかい","高い"],[347,"たくさん","많음","many","たくさん",""],[348,"タクシー","택시","taxi","タクシー",""],[349,"出す","내다","to put out","だす","出す"],[350,"立つ","일어서다","to stand","たつ","立つ"],[351,"たて","세로","length,height","たて",""],[352,"建物","건물","building","たてもの","建物"],[353,"楽しい","재미","enjoyable","たのしい","楽しい"],[354,"頼む","부탁하다","to ask","たのむ","頼む"],[355,"たばこ","담배","tobacco,cigarettes","たばこ",""],[356,"たぶん","아마","probably","たぶん",""],[357,"食べ物","음식","food","たべもの","食べ物"],[358,"食べる","먹다","to eat","たべる","食べる"],[359,"卵","계란","egg","たまご","卵"],[360,"誰","누구","who","だれ","誰"],[361,"誰か","누군가","somebody","だれか","誰"],[362,"誕生日","생일","birthday","たんじょうび","誕生日"],[363,"だんだん","차차","gradually","だんだん",""],[364,"小さい","작은","little","ちいさい","小さい"],[365,"小さな","작은","little","ちいさな","小さな"],[366,"近い","가깝다","near","ちかい","近い"],[367,"違う","다른","to differ","ちがう","違う"],[368,"近く","근처","near","ちかく","近く"],[369,"地下鉄","지하철","underground train","ちかてつ","地下鉄"],[370,"地図","지도","map","ちず","地図"],[371,"茶色","갈색","brown","ちゃいろ","茶色"],[372,"ちゃわん","그릇","rice bowl","ちゃわん",""],[373,"ちょうど","꼭","exactly","ちょうど",""],[374,"ちょっと","조금","somewhat","ちょっと",""],[375,"一日","초하루","first of month","ついたち","一日"],[376,"使う","쓰다","to use","つかう","使う"],[377,"疲れる","피곤","to get tired","つかれる","疲れる"],[378,"次","다음","next","つぎ","次"],[379,"着く","도착","to arrive at","つく","着く"],[380,"机","책상","desk","つくえ","机"],[381,"作る","만들다","to make","つくる","作る"],[382,"つける","붙이다","to turn on","つける",""],[383,"勤める","근무하다","to work for someone","つとめる","勤める"],[384,"つまらない","시시하다","boring","つまらない",""],[385,"冷たい","차갑다","cold to the touch","つめたい","冷たい"],[386,"強い","강한","powerful","つよい","強い"],[387,"手","손","hand","て","手"],[388,"テープ","테이프","tape","テープ",""],[389,"テーブル","테이블","table","テーブル",""],[390,"テープレコーダー","테이프 레코더","tape recorder","テープレコーダー",""],[391,"出かける","외출","to go out","でかける","出かける"],[392,"手紙","편지","letter","てがみ","手紙"],[393,"できる","할 수 있다","to be able to","できる",""],[394,"出口","출구","exit","でぐち","出口"],[395,"テスト","테스트","test","テスト",""],[396,"では","그러면","with that...","では",""],[397,"デパート","백화점","department store","デパート",""],[398,"でも","그러나","but","でも",""],[399,"出る","나가다","to appear,to leave","でる","出る"],[400,"テレビ","텔레비전","television","テレビ",""],[401,"天気","날씨","weather","てんき","天気"],[402,"電気","전기","electricity,electric light","でんき","電気"],[403,"電車","전차","electric train","でんしゃ","電車"],[404,"電話","전화","telephone","でんわ","電話"],[405,"戸","문","Japanese style door","と","戸"],[406,"ドア","문","Western style door","ドア",""],[407,"トイレ","화장실","toilet","トイレ",""],[408,"どう","어떻게","how,in what way","どう",""],[409,"どうして","어떻게","for what reason","どうして",""],[410,"どうぞ","아무쪼록","please","どうぞ",""],[411,"動物","동물","animal","どうぶつ","動物"],[412,"どうも","감사합니다","thanks","どうも",""],[413,"遠い","멀다","far","とおい","遠い"],[414,"十日","열흘","ten days,the tenth day","とおか","十日"],[415,"時々","때때로","sometimes","ときどき","時々"],[416,"時計","시계","watch,clock","とけい","時計"],[417,"どこ","어디","where","どこ",""],[418,"所","곳","place","ところ","所"],[419,"年","년","year","とし","年"],[420,"図書館","도서관","library","としょかん","図書館"],[421,"どちら","어느 쪽","which of two","どちら",""],[422,"どっち","어느 쪽","which","どっち",""],[423,"とても","아무리 해도","very","とても",""],[424,"どなた","누구","who","どなた",""],[425,"隣","이웃","next door to","となり","隣"],[426,"どの","어느","which","どの",""],[427,"飛ぶ","날다","to fly,to hop","とぶ","飛ぶ"],[428,"止まる","멈추다","to come to a halt","とまる","止まる"],[429,"友達","친구","friend","ともだち","友達"],[430,"土曜日","토요일","Saturday","どようび","土曜日"],[431,"鳥","새","bird","とり","鳥"],[432,"とり肉","닭고기","chicken meat","とりにく","とり肉"],[433,"取る","가지고","to take something","とる","取る"],[434,"撮る","찍다","to take a photo or record a film","とる","撮る"],[435,"どれ","어느","which (of three or more)","どれ",""],[436,"ナイフ","칼","knife","ナイフ",""],[437,"中","가운데","middle","なか","中"],[438,"長い","긴","long","ながい","長い"],[439,"鳴く","울다","animal noise. to chirp, roar or croak etc.","なく","鳴く"],[440,"無くす","없애다","to lose something","なくす","無くす"],[441,"なぜ","왜","why","なぜ",""],[442,"夏","여름","summer","なつ","夏"],[443,"夏休み","여름 방학","summer holiday","なつやすみ","夏休み"],[444,"など","등","et cetera","など",""],[445,"七つ","일곱","seven","ななつ","七つ"],[446,"七日","일곱째 날","seven days,the seventh day","なのか","七日"],[447,"名前","이름","name","なまえ","名前"],[448,"習う","배우","to learn","ならう","習う"],[449,"並ぶ","늘어선","to line up,to stand in a line","ならぶ","並ぶ"],[450,"並べる","나란히","to line up,to set up","ならべる","並べる"],[451,"なる","되다","to become","なる",""],[452,"何","무엇","what","なん","何"],[453,"二","둘","two","に","二"],[454,"賑やか","분주","bustling,busy","にぎやか","賑やか"],[455,"肉","고기","meat","にく","肉"],[456,"西","서쪽","west","にし","西"],[457,"日曜日","일요일","Sunday","にちようび","日曜日"],[458,"荷物","짐","luggage","にもつ","荷物"],[459,"ニュース","뉴스","news","ニュース",""],[460,"庭","정원","garden","にわ","庭"],[461,"脱ぐ","옷을 벗다","to take off clothes","ぬぐ","脱ぐ"],[462,"温い","미지근한","luke warm","ぬるい","温い"],[463,"ネクタイ","넥타이","tie,necktie","ネクタイ",""],[464,"猫","고양이","cat","ねこ","猫"],[465,"寝る","자다","to go to bed,to sleep","ねる","寝る"],[466,"ノート","노트","notebook,exercise book","ノート",""],[467,"登る","등반","to climb","のぼる","登る"],[468,"飲み物","음료","a drink","のみもの","飲み物"],[469,"飲む","마시다","to drink","のむ","飲む"],[470,"乗る","타다","to get on,to ride","のる","乗る"],[471,"歯","치아","tooth","は","歯"],[472,"パーティー","파티","party","パーティー",""],[473,"はい","예","yes","はい",""],[474,"灰皿","재떨이","ashtray","はいざら","灰皿"],[475,"入る","들어가다","to enter,to contain","はいる","入る"],[476,"葉書","엽서","postcard","はがき","葉書"],[477,"はく","입다","to wear,to put on trousers","はく",""],[478,"箱","상자","box","はこ","箱"],[479,"橋","다리","bridge","はし","橋"],[480,"はし","젓가락","chopsticks","はし",""],[481,"始まる","시작","to begin","はじまる","始まる"],[482,"初め","처음","beginning","はじめ","初め/始め"],[483,"初めて","처음","for the first time","はじめて","初めて"],[484,"走る","달리다","to run","はしる","走る"],[485,"バス","버스","bus","バス",""],[486,"バター","버터","butter","バター",""],[487,"二十歳","스무 살","20 years old,20th year","はたち","二十歳"],[488,"働く","일하다","to work","はたらく","働く"],[489,"八","여덟","eight","はち","八"],[490,"二十日","20일","twenty days,twentieth","はつか","二十日"],[491,"花","꽃","flower","はな","花"],[492,"鼻","코","nose","はな","鼻"],[493,"話","이야기","talk,story","はなし","話"],[494,"話す","이야기하다","to speak","はなす","話す"],[495,"早い","이르다","early","はやい","早い"],[496,"速い","빠르다","quick","はやい","速い"],[497,"春","봄","spring","はる","春"],[498,"貼る","붙이다","to stick","はる","貼る"],[499,"晴れ","맑음","clear weather","はれ","晴れ"],[500,"晴れる","맑은","to be sunny","はれる","晴れる"],[501,"半","반","half","はん","半"],[502,"晩","저녁","evening","ばん","晩"],[503,"パン","빵","bread","パン",""],[504,"ハンカチ","손수건","handkerchief","ハンカチ",""],[505,"番号","번호","number","ばんごう","番号"],[506,"晩御飯","저녁 식사","evening meal","ばんごはん","晩御飯"],[507,"半分","반","half minute","はんぶん","半分"],[508,"東","동쪽","east","ひがし","東"],[509,"引く","끌다","to pull","ひく","引く"],[510,"弾く","연주하다","to play an instrument with strings, including piano","ひく","弾く"],[511,"低い","낮다","short,low","ひくい","低い"],[512,"飛行機","비행기","aeroplane","ひこうき","飛行機"],[513,"左","왼쪽","left hand side","ひだり","左"],[514,"人","사람","person","ひと","人"],[515,"一つ","하나","one","ひとつ","一つ"],[516,"一月","한달","one month","ひとつき","一月"],[517,"一人","한 사람","one person","ひとり","一人"],[518,"暇","자유 시간","free time","ひま","暇"],[519,"百","백","hundred","ひゃく","百"],[520,"病院","병원","hospital","びょういん","病院"],[521,"病気","질병","illness","びょうき","病気"],[522,"昼","낮","noon, daytime","ひる","昼"],[523,"昼御飯","점심","midday meal","ひるごはん","昼御飯"],[524,"広い","넓은","spacious,wide","ひろい","広い"],[525,"フィルム","필름","roll of film","フィルム",""],[526,"封筒","봉투","envelope","ふうとう","封筒"],[527,"プール","수영장","swimming pool","プール",""],[528,"フォーク","포크","fork","フォーク",""],[529,"吹く","불다","to blow","ふく","吹く"],[530,"服","옷","clothes","ふく","服"],[531,"二つ","둘","two","ふたつ","二つ"],[532,"豚肉","돼지 고기","pork","ぶたにく","豚肉"],[533,"二人","두 사람","two people","ふたり","二人"],[534,"二日","이틀","two days, second day of the month","ふつか","二日"],[535,"太い","굵다","fat","ふとい","太い"],[536,"冬","겨울","winter","ふゆ","冬"],[537,"降る","내리다","to fall, e.g. rain or snow","ふる","降る"],[538,"古い","오래되다","old (not used for people)","ふるい","古い"],[539,"ふろ","욕조","bath","ふろ",""],[540,"文章","문장","sentence,text","ぶんしょう","文章"],[541,"ページ","페이지","page","ページ",""],[542,"下手","어설픔","unskillful","へた","下手"],[543,"ベッド","침대","bed","ベッド",""],[544,"ペット","애완 동물","pet","ペット",""],[545,"部屋","방","room","へや","部屋"],[546,"辺","지역","area","へん","辺"],[547,"ペン","펜","pen","ペン",""],[548,"勉強する","공부","to study","べんきょうする","勉強"],[549,"便利","편리","useful, convenient","べんり","便利"],[550,"帽子","모자","hat","ぼうし","帽子"],[551,"ボールペン","볼펜","ball-point pen","ボールペン",""],[552,"ほか","다른 것","other, the rest","ほか",""],[553,"ポケット","포켓","pocket","ポケット",""],[554,"欲しい","바라다","want","ほしい","欲しい"],[555,"ポスト","우편","post","ポスト",""],[556,"細い","얇은","thin","ほそい","細い"],[557,"ボタン","버튼","button","ボタン",""],[558,"ホテル","호텔","hotel","ホテル",""],[559,"本","책","book","ほん","本"],[560,"本棚","책장","bookshelves","ほんだな","本棚"],[561,"ほんとう","진실","truth","ほんとう",""],[562,"毎朝","매일 아침","every morning","まいあさ","毎朝"],[563,"毎月","매월","every month","まいげつ","毎月"],[564,"毎週","매주","every week","まいしゅう","毎週"],[565,"毎日","매일","every day","まいにち","毎日"],[566,"毎年","매년","every year","まいねん","毎年"],[567,"毎晩","매일 밤","every night","まいばん","毎晩"],[568,"前","전","before","まえ","前"],[569,"曲る","구부리","to turn,to bend","まがる","曲る"],[570,"まずい","맛이 없다","unpleasant","まずい",""],[571,"また","다른 때","again,and","また",""],[572,"まだ","아직","yet,still","まだ",""],[573,"町","마을","town,city","まち","町"],[574,"待つ","기다리다","to wait","まつ","待つ"],[575,"まっすぐ","똑바로","straight ahead,direct","まっすぐ",""],[576,"マッチ","경기","match","マッチ",""],[577,"窓","창문","window","まど","窓"],[578,"丸い","둥글다","round,circular","まるい","丸い/円い"],[579,"万","만","ten thousand","まん","万"],[580,"万年筆","만년필","fountain pen","まんねんひつ","万年筆"],[581,"磨く","연마","to brush teeth, to polish","みがく","磨く"],[582,"右","오른쪽","right side","みぎ","右"],[583,"短い","짧다","short","みじかい","短い"],[584,"水","물","water","みず","水"],[585,"店","가게","shop","みせ","店"],[586,"見せる","보이다","to show","みせる","見せる"],[587,"道","길","street","みち","道"],[588,"三日","삼일","three days, third day of the month","みっか","三日"],[589,"三つ","세","three","みっつ","三つ"],[590,"緑","녹색","green","みどり","緑"],[591,"皆さん","여러분","everyone","みなさん","皆さん"],[592,"南","남","south","みなみ","南"],[593,"耳","귀","ear","みみ","耳"],[594,"見る","보다","to see, to watch","みる","見る 観る"],[595,"みんな","모두","everyone","みんな",""],[596,"六日","6일","six days, sixth day of the month","むいか","六日"],[597,"向こう","저쪽","over there","むこう","向こう"],[598,"難しい","어렵다","difficult","むずかしい","難しい"],[599,"六つ","여섯","six","むっつ","六つ"],[600,"村","마을","village","むら","村"],[601,"目","눈","eye","め","目"],[602,"メートル","미터","metre","メートル",""],[603,"眼鏡","안경","glasses","めがね","眼鏡"],[604,"もう","벌써","already","もう",""],[605,"もう一度","다시","again","もういちど","もう一度"],[606,"木曜日","목요일","Thursday","もくようび","木曜日"],[607,"持つ","쥐다","to hold","もつ","持つ"],[608,"もっと","더","more","もっと",""],[609,"物","물건","thing","もの","物"],[610,"門","문","gate","もん","門"],[611,"問題","문제","problem","もんだい","問題"],[612,"八百屋","청과물","greengrocer","やおや","八百屋"],[613,"野菜","야채","vegetable","やさい","野菜"],[614,"易しい","쉽다","easy, simple","やさしい","易しい"],[615,"安い","싸다","cheap","やすい","安い"],[616,"休み","휴가","rest,holiday","やすみ","休み"],[617,"休む","쉬다","to rest","やすむ","休む"],[618,"八つ","여덟","eight","やっつ","八つ"],[619,"山","산","mountain","やま","山"],[620,"やる","하다","to do","やる",""],[621,"夕方","저녁","evening","ゆうがた","夕方"],[622,"夕飯","저녁밥","dinner","ゆうはん","夕飯"],[623,"郵便局","우체국","post office","ゆうびんきょく","郵便局"],[624,"昨夜","지난 밤","last night","ゆうべ","昨夜"],[625,"有名","유명","famous","ゆうめい","有名"],[626,"雪","눈","snow","ゆき","雪"],[627,"行く","가다","to go","ゆく","行く"],[628,"ゆっくりと","천천히","slowly","ゆっくりと",""],[629,"八日","8일","eight days, eighth day of the month","ようか","八日"],[630,"洋服","옷","western-style clothes","ようふく","洋服"],[631,"よく","잘","often, well","よく",""],[632,"横","옆","beside,side,width","よこ","横"],[633,"四日","4일","four days, fouth day of the month","よっか","四日"],[634,"四つ","넷","four","よっつ","四つ"],[635,"呼ぶ","부르다","to call out,to invite","よぶ","呼ぶ"],[636,"読む","읽다","to read","よむ","読む"],[637,"夜","밤","evening,night","よる","夜"],[638,"弱い","약한","weak","よわい","弱い"],[639,"来月","다음달","next month","らいげつ","来月"],[640,"来週","다음주","next week","らいしゅう","来週"],[641,"来年","내년","next year","らいねん","来年"],[642,"ラジオ","라디오","radio","ラジオ",""],[643,"ラジカセ","카세트","radio cassette player","ラジカセ",""],[644,"りっぱ","훌륭함","splendid","りっぱ",""],[645,"留学生","유학생","overseas student","りゅうがくせい","留学生"],[646,"両親","부모","both parents","りょうしん","両親"],[647,"料理","요리","cuisine","りょうり","料理"],[648,"旅行","여행","travel","りょこう","旅行"],[649,"零","영","zero","れい","零"],[650,"冷蔵庫","냉장고","refrigerator","れいぞうこ","冷蔵庫"],[651,"レコード","기록","record","レコード",""],[652,"レストラン","레스토랑","restaurant","レストラン",""],[653,"練習する","연습","to practice","れんしゅうする","練習"],[654,"廊下","복도","corridor","ろうか","廊下"],[655,"六","육","six","ろく","六"],[656,"ワイシャツ","셔츠","business shirt","ワイシャツ",""],[657,"若い","젊은","young","わかい","若い"],[658,"分かる","알다","to be understood","わかる","分かる"],[659,"忘れる","잊어 버리다","to forget","わすれる","忘れる"],[660,"私","나","(humble) I,myself","わたくし","私"],[661,"私","나","I,myself","わたし","私"],[662,"渡す","건네주다","to hand over","わたす","渡す"],[663,"渡る","건너다","to go across","わたる","渡る"],[664,"悪い","나쁘다","bad","わるい","悪い"]];
+
+/* ===== kana ===== */
+const toHira = s => s.replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+const HAS_KANJI = /[一-鿿々]/;
+const R1 = {あ:'a',い:'i',う:'u',え:'e',お:'o',か:'ka',き:'ki',く:'ku',け:'ke',こ:'ko',さ:'sa',し:'shi',す:'su',せ:'se',そ:'so',た:'ta',ち:'chi',つ:'tsu',て:'te',と:'to',な:'na',に:'ni',ぬ:'nu',ね:'ne',の:'no',は:'ha',ひ:'hi',ふ:'fu',へ:'he',ほ:'ho',ま:'ma',み:'mi',む:'mu',め:'me',も:'mo',や:'ya',ゆ:'yu',よ:'yo',ら:'ra',り:'ri',る:'ru',れ:'re',ろ:'ro',わ:'wa',を:'wo',ん:'n',が:'ga',ぎ:'gi',ぐ:'gu',げ:'ge',ご:'go',ざ:'za',じ:'ji',ず:'zu',ぜ:'ze',ぞ:'zo',だ:'da',ぢ:'ji',づ:'zu',で:'de',ど:'do',ば:'ba',び:'bi',ぶ:'bu',べ:'be',ぼ:'bo',ぱ:'pa',ぴ:'pi',ぷ:'pu',ぺ:'pe',ぽ:'po',ゔ:'vu',ぁ:'a',ぃ:'i',ぅ:'u',ぇ:'e',ぉ:'o',ゃ:'ya',ゅ:'yu',ょ:'yo',ゎ:'wa'};
+const SMALLV = {ぁ:'a',ぃ:'i',ぅ:'u',ぇ:'e',ぉ:'o'}, SMALLY = {ゃ:'a',ゅ:'u',ょ:'o'};
+const cons = ro => ro === 'u' ? 'w' : ro.replace(/[aiueo]+$/,'');
+function romaji(kana, long='vowel'){
+  const s = toHira(kana); let out = '', i = 0;
+  while(i < s.length){
+    const c = s[i], n = s[i+1];
+    if(c === 'っ'){ const nx = romaji(s.slice(i+1, i+3), long); out += nx.startsWith('ch') ? 't' : (nx[0] && !'aiueon'.includes(nx[0]) ? nx[0] : ''); i++; continue; }
+    if(c === 'ー'){ const v = (out.match(/[aiueo](?=[^aiueo]*$)/)||[''])[0]; out += long === '-' ? '-' : v; i++; continue; }
+    if(c === 'ん'){ out += (n && /[あいうえおやゆよ]/.test(n)) ? "n'" : 'n'; i++; continue; }
+    const base = R1[c];
+    if(base === undefined){ out += c; i++; continue; }
+    if(n && SMALLY[n] && base.endsWith('i') && base.length > 1){ const st = base.slice(0,-1); out += (/^(sh|ch|j)$/.test(st) ? st : st + 'y') + SMALLY[n]; i += 2; continue; }
+    if(n && SMALLV[n] && base.length > 1){ out += cons(base) + SMALLV[n]; i += 2; continue; }
+    out += base; i++;
+  }
+  return out;
+}
+const RK = (()=>{ const m = {};
+  for(const [k,v] of Object.entries(R1)) if(!'ぁぃぅぇぉゃゅょゎ'.includes(k) && k !== 'ん' && k !== 'ぢ' && k !== 'づ') m[v] = k;
+  for(const k of 'きしちにひみりぎじびぴ'){ const st = R1[k].slice(0,-1); for(const [y,v] of Object.entries(SMALLY)) m[(/^(sh|ch|j)$/.test(st)?st:st+'y')+v] = k+y; }
+  Object.assign(m,{si:'し',ti:'ち',tu:'つ',hu:'ふ',zi:'じ',di:'ぢ',du:'づ',sya:'しゃ',syu:'しゅ',syo:'しょ',tya:'ちゃ',tyu:'ちゅ',tyo:'ちょ',cya:'ちゃ',cyu:'ちゅ',cyo:'ちょ',zya:'じゃ',zyu:'じゅ',zyo:'じょ',jya:'じゃ',jyu:'じゅ',jyo:'じょ',
+    fa:'ふぁ',fi:'ふぃ',fe:'ふぇ',fo:'ふぉ',thi:'てぃ',dhi:'でぃ',she:'しぇ',che:'ちぇ',je:'じぇ',wi:'うぃ',we:'うぇ',vu:'ゔ',la:'ら',li:'り',lu:'る',le:'れ',lo:'ろ'});
+  return m; })();
+function toKana(input){
+  const s = input.toLowerCase().replace(/[\s.]/g,'').replace(/[-‐－ー~]/g,'ー'); let out = '', i = 0;
+  while(i < s.length){
+    const c = s[i], n = s[i+1];
+    if(c === 'n'){
+      if(n === "'"){ out += 'ん'; i += 2; continue; }
+      if(n === undefined || !/[aiueoy]/.test(n)){ out += 'ん'; i += (n === 'n' && !/[aiueoy]/.test(s[i+2]||'')) ? 2 : 1; continue; }
+    }
+    if(/[bcdfghjklmpqrstvwxyz]/.test(c) && c === n){ out += 'っ'; i++; continue; }
+    if(c === 't' && s.startsWith('ch', i+1)){ out += 'っ'; i++; continue; }
+    let hit = false;
+    for(const L of [3,2,1]){ const seg = s.substr(i,L); if(RK[seg]){ out += RK[seg]; i += L; hit = true; break; } }
+    if(!hit){ out += c; i++; }
+  }
+  return out;
+}
+function longToVowelKana(h){ const V = {a:'あ',i:'い',u:'う',e:'え',o:'お'}; let out=''; for(const c of h){ if(c==='ー'){ const v=(romaji(out).match(/[aiueo](?=[^aiueo]*$)/)||[''])[0]; out += V[v]||''; } else out += c; } return out; }
+function romajiMatches(input, kana){
+  const norm = x => x.toLowerCase().replace(/[\s'’.]/g,''); const inp = norm(input); if(!inp) return false;
+  const h = toHira(kana), k = toKana(input);
+  if(k === h || k === longToVowelKana(h)) return true;
+  return [romaji(kana,'vowel'), romaji(kana,'-')].some(r => norm(r) === inp);
+}
+
+/* ===== data & storage ===== */
+const mkWord = (id, w, ko, en, h) => ({id, w, ko, en: en || '', h, hh: toHira(h), hasKanji: HAS_KANJI.test(w), ro: romaji(h)});
+const N5 = RAW.map(([id,w,ko,en,h]) => mkWord(id, w, ko, en, h));
+let WORDS = N5;
+const KEY = 'n5-words-v1';
+let S = {w:{}, days:{}, sets:[], goal:20, log:[], books:[], book:'n5', del:[], u:0};
+function normalize(d){
+  const s = {w:{}, days:{}, sets:[], goal:20, log:[], books:[], book:'n5', del:[], u:0, ...d};
+  for(const k in s.days) if(typeof s.days[k] === 'number') s.days[k] = {n:s.days[k], c:0};
+  return s;
+}
+try{ const l = JSON.parse(localStorage.getItem(KEY) || 'null'); if(l && l.w) S = normalize(l); }catch(e){}
+function save(){ S.u = Date.now(); try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} if(typeof schedulePush === 'function') schedulePush(); }
+
+let CUSTOM = [], GRAMMAR = [];
+function rebuild(){
+  CUSTOM = []; GRAMMAR = [];
+  for(const s of S.sets){
+    (s.words||[]).forEach((x,i) => CUSTOM.push({...mkWord(`b${s.id}_${i}`, x.w, x.ko, x.en, x.h || x.w), set:s.id}));
+    (s.grammar||[]).forEach((g,gi) => (g.questions||[]).forEach((q,qi) => GRAMMAR.push({id:`g${s.id}_${gi}_${qi}`, set:s.id, point:g.point, ...q})));
+  }
+}
+rebuild();
+/* ===== 단어장 (기본 N5 + 직접 올린 단어장) ===== */
+function bookName(){ const b = S.books.find(b => b.id === S.book); return b ? b.name : 'JLPT N5'; }
+function applyBook(){
+  const b = S.books.find(b => b.id === S.book);
+  if(!b){ S.book = 'n5'; WORDS = N5; return; }
+  WORDS = b.words.map((x,i) => mkWord(`${b.id}:${i}`, x.w, x.ko, x.en, x.h));
+}
+applyBook();
+let xlsxLoading = null;
+function loadXLSX(){
+  if(window.XLSX) return Promise.resolve();
+  return xlsxLoading || (xlsxLoading = new Promise((ok, bad) => { const sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'; sc.onload = ok; sc.onerror = () => { xlsxLoading = null; bad(new Error('엑셀 읽기 도구를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.')); }; document.head.appendChild(sc); }));
+}
+function parseRows(rows){
+  rows = rows.filter(r => r && r.some(c => String(c ?? '').trim()));
+  if(!rows.length) throw new Error('빈 파일이에요.');
+  const head = rows[0].map(c => String(c ?? '').trim().toLowerCase());
+  const find = re => head.findIndex(h => re.test(h));
+  let ri = find(/hiragana|히라가나|읽기|후리가나|reading|よみ|ふりがな|kana/);
+  let ki = find(/한국어|뜻|의미|korean|meaning/); if(ki >= 0 && /영어|english/.test(head[ki])) ki = -1;
+  let ei = find(/영어|english/);
+  let wi = head.findIndex((h,i) => i !== ri && i !== ki && /일본어|단어|word|japanese|표기|vocab/.test(h));
+  let body = rows.slice(1);
+  if(wi < 0 || ki < 0){
+    // 제목 줄이 없거나 못 알아본 경우: N5 파일과 같은 순서(번호, 일본어, 한국어, 영어, 히라가나)로 가정
+    const hasNo = rows.every(r => r[0] === undefined || r[0] === '' || !isNaN(+r[0]));
+    const off = hasNo ? 1 : 0; wi = off; ki = off + 1; ei = off + 2; ri = off + 3;
+    body = HAS_KANJI.test(String(rows[0][wi] ?? '')) || /[\u3040-\u30ff]/.test(String(rows[0][wi] ?? '')) ? rows : rows.slice(1);
+  }
+  const words = [], seen = new Set(); let skipped = 0;
+  for(const r of body){
+    const w = String(r[wi] ?? '').trim(), ko = String(r[ki] ?? '').trim();
+    let h = ri >= 0 ? String(r[ri] ?? '').trim() : '';
+    if(!h && !HAS_KANJI.test(w)) h = w;
+    if(!w || !ko || !h || !/^[\u3040-\u30ffー・ 　]+$/.test(h) || seen.has(w + '|' + ko)){ skipped++; continue; }
+    seen.add(w + '|' + ko);
+    words.push({w, ko, en: ei >= 0 ? String(r[ei] ?? '').trim() : '', h: h.replace(/[ 　・]/g,'')});
+  }
+  if(words.length < 4) throw new Error('읽을 수 있는 단어가 너무 적어요. 일본어 · 한국어 뜻 · 히라가나 열이 있는지 확인해 주세요.');
+  return {words, skipped};
+}
+function parseCSV(text, sep){
+  const rows = []; let row = [], cell = '', q = false;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i];
+    if(q){ if(c === '"'){ if(text[i+1] === '"'){ cell += '"'; i++; } else q = false; } else cell += c; }
+    else if(c === '"') q = true;
+    else if(c === sep){ row.push(cell); cell = ''; }
+    else if(c === '\n' || c === '\r'){ if(c === '\r' && text[i+1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+    else cell += c;
+  }
+  if(cell || row.length){ row.push(cell); rows.push(row); }
+  return rows;
+}
+async function importBook(file){
+  let rows;
+  if(/\.csv$|\.txt$|\.tsv$/i.test(file.name)){
+    const text = await file.text(), sep = /\t/.test(text.split('\n')[0]) ? '\t' : ',';
+    rows = parseCSV(text.replace(/^\uFEFF/,''), sep);
+  } else {
+    await loadXLSX();
+    const wb = XLSX.read(await file.arrayBuffer(), {type:'array'});
+    rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:''});
+  }
+  const {words, skipped} = parseRows(rows);
+  const book = {id:'bk' + Date.now().toString(36), name:file.name.replace(/\.[^.]+$/,'').replace(/^_+|_+$/g,'').slice(0,30) || '내 단어장', words};
+  S.books.push(book); S.book = book.id; applyBook(); save();
+  return `‘${book.name}’ ${words.length}단어를 추가하고 이 단어장으로 바꿨어요.` + (skipped ? ` (읽기나 뜻이 없는 ${skipped}줄은 건너뜀)` : '');
+}
+const allWords = () => CUSTOM.length ? WORDS.concat(CUSTOM) : WORDS;
+
+const dayKey = (d = new Date()) => d.toLocaleDateString('sv-SE');
+const dayN = k => (S.days[k] && S.days[k].n) || 0;
+const todayCount = () => dayN(dayKey());
+function streak(){ let n = 0; const d = new Date(); if(!dayN(dayKey(d))) d.setDate(d.getDate()-1); while(dayN(dayKey(d))){ n++; d.setDate(d.getDate()-1); } return n; }
+function lastDays(n){ const out = [], d = new Date(); d.setDate(d.getDate() - n + 1);
+  for(let i = 0; i < n; i++){ const k = dayKey(d), v = S.days[k] || {n:0, c:0}; out.push({k, n:v.n, c:v.c, label:`${d.getMonth()+1}/${d.getDate()}`, wd:'일월화수목금토'[d.getDay()]}); d.setDate(d.getDate()+1); }
+  return out; }
+function accuracy(days){ const n = days.reduce((a,d)=>a+d.n,0), c = days.reduce((a,d)=>a+d.c,0); return n ? Math.round(c/n*100) : null; }
+
+/* mistake patterns: what kind of slip a wrong reading/kanji answer was */
+const plain = s => s.normalize('NFD').replace(/[゙゚]/g,'').normalize('NFC');
+const noSoku = s => s.replace(/っ/g,'');
+const noLong = s => s.replace(/ー/g,'').replace(/([おこそとのほもよろごぞどぼぽょ])う/g,'$1').replace(/([えけせてねへめれげぜでべぺ])い/g,'$1').replace(/(.)\1/g,'$1');
+const bigY = s => s.replace(/[ゃゅょ]/g, c => ({ゃ:'や',ゅ:'ゆ',ょ:'よ'}[c]));
+function classify(type, item, chosen){
+  if(chosen === null) return 'idk';
+  let a, b;
+  if(type === 'reading'){ a = item.hh; b = chosen; }
+  else if(type === 'romaji'){ a = item.hh; b = toKana(chosen); }
+  else if(type === 'writing'){
+    const ws = allWords().filter(x => x.w === chosen);
+    if(ws.some(x => x.hh === item.hh)) return 'homophone';
+    if([...chosen].some(c => HAS_KANJI.test(c) && item.w.includes(c))) return 'similar';
+    return 'other';
+  } else return 'other';
+  if(a === b) return 'other';
+  if(plain(a) === plain(b)) return 'dakuten';
+  if(noSoku(a) === noSoku(b)) return 'sokuon';
+  if(noLong(a) === noLong(b)) return 'long';
+  if(bigY(a) === bigY(b)) return 'yoon';
+  return 'other';
+}
+const PATTERNS = {
+  dakuten:  {label:'탁음·반탁음 ゛゜', tip:'か/が, は/ば/ぱ를 헷갈려요. 소리 내서 읽으면서 점(゛)이 있는지 확인하세요.', test:w => w.hasKanji && /[゙゚]/.test(w.hh.normalize('NFD')), type:'reading'},
+  sokuon:   {label:'촉음 っ', tip:'작은 っ는 한 박자 멈추는 소리예요. がっこう를 が・っ・こ・う 네 박으로 세어 보세요.', test:w => w.hasKanji && w.hh.includes('っ'), type:'reading'},
+  long:     {label:'장음 おう·えい·ー', tip:'소리 길이가 뜻을 바꿔요(おばさん/おばあさん). 길게 끄는 부분을 손가락으로 한 박 더 세어 보세요.', test:w => w.hasKanji && noLong(w.hh) !== w.hh, type:'reading'},
+  yoon:     {label:'요음 ゃゅょ', tip:'きゃ는 한 박, きや는 두 박이에요. 작은 글자는 앞 글자와 붙여 읽어요.', test:w => w.hasKanji && /[ゃゅょ]/.test(w.hh), type:'reading'},
+  homophone:{label:'같은 소리 다른 한자', tip:'あつい처럼 소리가 같은 단어는 뜻과 짝지어 외우세요(暑い 날씨 / 熱い 물건 / 厚い 두께).', test:w => w.hasKanji && WORDS.filter(x => x.hasKanji && x.hh === w.hh && x.w !== w.w).length > 0, type:'writing'},
+  similar:  {label:'모양·글자 겹치는 한자', tip:'같은 한자가 들어간 단어끼리 묶어서 비교하며 외우세요(先生/先週).', test:w => w.hasKanji && [...w.w].filter(c => HAS_KANJI.test(c)).length > 0, type:'writing'},
+  idk:      {label:'아예 모름', tip:'처음 보는 단어가 많아요. 뜻 문제로 먼저 익숙해진 뒤 읽기·한자로 넘어가세요.', test:w => inNote(w.id), type:'meaning'}
+};
+const inNote = id => !!(S.w[id] && S.w[id].n && S.w[id].n.length);
+const status = id => { const r = S.w[id]; if(!r || r.c + r.x === 0) return 'new'; return inNote(id) ? 'note' : 'known'; };
+function record(item, type, ok, chosen){
+  const r = S.w[item.id] || (S.w[item.id] = {c:0, x:0, s:0, n:[]});
+  r.t = Date.now();
+  const dk = dayKey(), d = S.days[dk] || (S.days[dk] = {n:0, c:0}); d.n++; if(ok) d.c++;
+  S.log.push([Date.now(), item.id, type, ok ? 1 : 0, ok ? '' : classify(type, item, chosen)]);
+  if(S.log.length > 4000) S.log = S.log.slice(-4000);
+  if(ok){ r.c++; if(r.n.length){ r.s++; if(r.s >= 2){ r.n = []; r.s = 0; } } }
+  else { r.x++; r.s = 0; if(!r.n.includes(type)) r.n.push(type); }
+  save();
+}
+
+/* ===== questions ===== */
+const TYPES = {meaning:'뜻', reading:'읽기', writing:'한자', reverse:'뜻 → 단어', romaji:'로마자', grammar:'문법'};
+const applicable = (w,t) => (t === 'reading' || t === 'writing') ? w.hasKanji : true;
+const shuffle = a => { a = a.slice(); for(let i=a.length-1;i>0;i--){ const j = Math.random()*(i+1)|0; [a[i],a[j]] = [a[j],a[i]]; } return a; };
+const pick = a => a[Math.random()*a.length|0];
+function fill(cands, excl, n, out){ for(const c of shuffle(cands)){ if(out.length >= n) break; if(!excl.has(c) && !out.includes(c)) out.push(c); } return out; }
+const DAK = 'かがきぎくぐけげこごさざしじすずせぜそぞただちぢつづてでとどはばひびふぶへべほぼ';
+const DMAP = {}; for(let i=0;i<DAK.length;i+=2){ DMAP[DAK[i]] = DAK[i+1]; DMAP[DAK[i+1]] = DAK[i]; }
+Object.assign(DMAP,{ぱ:'ば',ぴ:'び',ぷ:'ぶ',ぺ:'べ',ぽ:'ぼ'});
+const YMAP = {ゃ:'や',ゅ:'ゆ',ょ:'よ',や:'ゃ',ゆ:'ゅ',よ:'ょ'};
+const O_ROW = 'おこそとのほもよろごぞどぼぽょ', DBL_OK = 'かきくけこさしすせそたちつてとぱぴぷぺぽ';
+function mutations(r){
+  const out = new Set(), a = [...r];
+  a.forEach((c,i) => {
+    if(DMAP[c]) out.add(r.slice(0,i) + DMAP[c] + r.slice(i+1));
+    if(YMAP[c] && i > 0) out.add(r.slice(0,i) + YMAP[c] + r.slice(i+1));
+    if(c === 'っ') out.add(r.slice(0,i) + r.slice(i+1));
+    if(i > 0 && DBL_OK.includes(c) && a[i-1] !== 'っ' && a[i-1] !== 'ん') out.add(r.slice(0,i) + 'っ' + r.slice(i));
+    if(c === 'う' && i > 0 && O_ROW.includes(a[i-1])) out.add(r.slice(0,i) + r.slice(i+1));
+    if(O_ROW.includes(c) && a[i+1] !== 'う' && i < a.length-1) out.add(r.slice(0,i+1) + 'う' + r.slice(i+1));
+  });
+  out.delete(r); return [...out];
+}
+function build(item, type){
+  if(type === 'grammar') return {item, type, prompt:item.q, ask:item.point || '빈칸에 알맞은 것은?', correct:item.choices[item.answer], choices:shuffle(item.choices), jp:true, sent:true};
+  const w = item, P = allWords(), same = P.filter(x => x.w === w.w), o = [];
+  if(type === 'meaning'){
+    const ex = new Set([w.ko, ...same.map(x=>x.ko)]), pred = /다$/.test(w.ko), pool = P.filter(x => x.id !== w.id);
+    fill(pool.filter(x => /다$/.test(x.ko) === pred).map(x=>x.ko), ex, 3, o); fill(pool.map(x=>x.ko), ex, 3, o);
+    return q(w, type, w.w, w.hasKanji ? w.h : '', '뜻은?', w.ko, o, false);
+  }
+  if(type === 'reading'){
+    const ex = new Set(same.map(x=>x.hh)); fill(mutations(w.hh), ex, 2, o);
+    const others = P.filter(x => x.w !== w.w && x.hasKanji && Math.abs(x.hh.length - w.hh.length) <= 1);
+    fill(others.filter(x => x.hh[0] === w.hh[0]).map(x=>x.hh), ex, 3, o); fill(others.map(x=>x.hh), ex, 3, o);
+    return q(w, type, w.w, '', '어떻게 읽나요?', w.hh, o, true);
+  }
+  if(type === 'writing'){
+    const ex = new Set([w.w]), chars = [...w.w].filter(c => HAS_KANJI.test(c));
+    const pool = P.filter(x => x.hasKanji && x.w !== w.w && !(x.hh === w.hh && x.ko === w.ko));
+    fill(pool.filter(x => chars.some(c => x.w.includes(c))).map(x=>x.w), ex, 3, o);
+    fill(pool.filter(x => x.hh.length === w.hh.length).map(x=>x.w), ex, 3, o); fill(pool.map(x=>x.w), ex, 3, o);
+    return q(w, type, w.h, w.ko, '한자로는?', w.w, o, true);
+  }
+  if(type === 'reverse'){
+    const ex = new Set([w.w, ...P.filter(x => x.ko === w.ko).map(x=>x.w)]), pool = P.filter(x => x.ko !== w.ko);
+    fill(pool.filter(x => x.hasKanji === w.hasKanji).map(x=>x.w), ex, 3, o); fill(pool.map(x=>x.w), ex, 3, o);
+    const r = q(w, type, w.ko, w.en, '일본어로는?', w.w, o, true); r.ko = true; r.ruby = true; return r;
+  }
+  return {item:w, type, prompt:w.w, sub:'', ask:'로마자로 입력', correct:w.ro, input:true};
+}
+const q = (item, type, prompt, sub, ask, correct, o, jp) => ({item, type, prompt, sub, ask, correct, choices:shuffle([correct, ...o.slice(0,3)]), jp});
+
+/* ===== app ===== */
+const app = document.getElementById('app');
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let screen = 'home', quiz = null, result = null;
+let setup = {mode:'mix', range:'all', count:20};
+try{ const p = JSON.parse(localStorage.getItem('n5-setup')||'null'); if(p) setup = {...setup, ...p}; }catch(e){}
+function go(s){ screen = s; render(); window.scrollTo(0,0); }
+
+const MODES = {mix:['meaning','reading','writing','reverse'], meaning:['meaning'], reading:['reading'], writing:['writing'], romaji:['romaji']};
+function itemFor(w, types){
+  let ts = types.filter(t => applicable(w,t)); if(!ts.length) ts = ['meaning'];
+  const missed = inNote(w.id) ? S.w[w.id].n.filter(t => ts.includes(t)) : [];
+  return {item:w, type: pick(missed.length ? missed : ts)};
+}
+function startQuiz(items){
+  if(!items.length) return;
+  quiz = {items, i:0, log:[]}; next();
+}
+function next(){
+  if(quiz.i >= quiz.items.length) return finish();
+  const it = quiz.items[quiz.i]; quiz.q = build(it.item, it.type); quiz.done = false; quiz.chosen = null;
+  screen = 'quiz'; render();
+}
+function answer(choice){
+  if(quiz.done) return;
+  const x = quiz.q, ok = choice !== null && (x.input ? romajiMatches(choice, x.item.h) : choice === x.correct);
+  quiz.done = true; quiz.chosen = choice; quiz.ok = ok; quiz.log.push({item:x.item, type:x.type, ok});
+  record(x.item, x.type, ok, choice); render();
+}
+function finish(){ result = quiz.log; quiz = null; go('result'); }
+
+function startToday(){
+  const need = Math.max(S.goal - todayCount(), 10);
+  const note = shuffle(allWords().filter(w => inNote(w.id))).map(w => itemFor(w, MODES.mix))
+    .concat(GRAMMAR.filter(g => inNote(g.id)).map(g => ({item:g, type:'grammar'})));
+  const items = shuffle(note).slice(0, Math.ceil(need/2));
+  const rest = shuffle(WORDS.filter(w => status(w.id) === 'new')).concat(shuffle(WORDS.filter(w => status(w.id) === 'known')));
+  for(const w of rest){ if(items.length >= need) break; items.push(itemFor(w, MODES.mix)); }
+  startQuiz(shuffle(items));
+}
+function startSetup(){
+  const types = MODES[setup.mode];
+  let pool = WORDS.filter(w => types.some(t => applicable(w,t)));
+  if(setup.range === 'new') pool = pool.filter(w => status(w.id) === 'new');
+  if(setup.range === 'note') pool = pool.filter(w => inNote(w.id));
+  startQuiz(shuffle(pool).slice(0, setup.count).map(w => itemFor(w, types)));
+}
+function noteList(){ return allWords().filter(w => inNote(w.id)).concat(GRAMMAR.filter(g => inNote(g.id))).sort((a,b) => S.w[b.id].x - S.w[a.id].x); }
+
+/* --- screens --- */
+function DayChart(days, goal, sel){
+  const W = 320, H = 120, top = 14, bot = 20, n = days.length, gap = 4, bw = (W - gap*(n-1)) / n;
+  const max = Math.max(goal, ...days.map(d => d.n), 1) * 1.1, y = v => top + (H - top - bot) * (1 - v/max);
+  const gy = y(goal);
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="최근 ${n}일 푼 문제 수">
+    <line x1="0" x2="${W}" y1="${H-bot}" y2="${H-bot}" class="axis"/>
+    <line x1="0" x2="${W}" y1="${gy}" y2="${gy}" class="goal"/>
+    ${days.map((d,i) => { const x = i*(bw+gap), h = Math.max((H-bot) - y(d.n), d.n ? 2 : 0), isSel = i === sel;
+      return `<g class="day ${isSel?'sel':''}" data-day="${i}">
+        <rect class="hit" x="${x - gap/2}" y="0" width="${bw+gap}" height="${H}"/>
+        ${h ? `<path class="barm ${d.n >= goal ? 'met' : ''}" d="M${x},${H-bot} V${H-bot-h+Math.min(4,h)} Q${x},${H-bot-h} ${x+Math.min(4,bw/2)},${H-bot-h} H${x+bw-Math.min(4,bw/2)} Q${x+bw},${H-bot-h} ${x+bw},${H-bot-h+Math.min(4,h)} V${H-bot} Z"/>` : `<rect class="zero" x="${x}" y="${H-bot-2}" width="${bw}" height="2" rx="1"/>`}
+        ${(i % 2 === n % 2 || isSel || i === n-1) ? `<text x="${x+bw/2}" y="${H-5}" text-anchor="middle" class="xl ${isSel?'on':''}">${i === n-1 ? '오늘' : d.label}</text>` : ''}
+      </g>`; }).join('')}
+  </svg>`;
+}
+let daySel = 13;
+function Home(){
+  const n = todayCount(), g = S.goal, done = n >= g, st = streak();
+  const days = lastDays(14), acc7 = accuracy(days.slice(-7));
+  const known = WORDS.filter(w => status(w.id) === 'known').length, notes = noteList().length;
+  const d = days[daySel] || days[13];
+  const dacc = d.n ? Math.round(d.c/d.n*100) : null;
+  return `<div class="screen">
+    <div class="top"><button class="bookbtn" data-go="books"><h1>${esc(bookName())}</h1><span>단어장 ▾</span></button><button class="link" data-go="settings">설정</button></div>
+    <div class="card dash">
+      <div class="kpis">
+        <div><span>오늘</span><b class="num">${n}<small>/${g}</small></b></div>
+        <div><span>연속</span><b class="num ${st?'hot':''}">${st}<small>일</small></b></div>
+        <div><span>7일 정답률</span><b class="num">${acc7 === null ? '–' : acc7}<small>${acc7 === null ? '' : '%'}</small></b></div>
+      </div>
+      <div class="progline"><div class="bar"><i style="width:${Math.min(n/g,1)*100}%" class="${done?'met':''}"></i></div><span class="small muted">${done ? '오늘 목표 달성' : `목표까지 ${g-n}문제`}</span></div>
+      <div>
+        <div class="charthead"><span>최근 2주 학습량 <span class="legend">┄ 목표 ${g}</span></span><span class="num">${d.k === dayKey() ? '오늘' : `${d.label}(${d.wd})`} · ${d.n}문제${dacc === null ? '' : ` · 정답 ${dacc}%`}</span></div>
+        ${DayChart(days, g, daySel)}
+      </div>
+      <button class="btn primary" id="today">${done ? '조금 더 풀기' : '오늘의 학습 시작'}</button>
+    </div>
+    <div class="menu">
+      <button class="tile" data-go="setup"><b>골라서 풀기</b><span>유형·범위 선택</span></button>
+      <button class="tile" data-go="note"><b>오답노트</b><span>${notes ? `<span class="badge">${notes}개</span> 대기` : '비어 있음'}</span></button>
+      <button class="tile" data-go="analysis"><b>약점 분석</b><span>자주 틀리는 것</span></button>
+      <button class="tile" data-go="photo"><b>교재 사진</b><span>사진으로 문제</span></button>
+    </div>
+    <div class="card progress">
+      <div class="row"><span>맞힌 단어</span><span class="num"><b>${known}</b> / ${WORDS.length}</span></div>
+      <div class="bar"><i style="width:${known/WORDS.length*100}%"></i></div>
+    </div>
+  </div>`;
+}
+function HBars(rows, fmt){ // rows: [{label, value, max, note}]
+  return `<div class="hbars">${rows.map(r => `<div class="hb"><span class="hl">${esc(r.label)}</span>
+    <span class="ht"><i style="width:${r.max ? Math.max(r.value/r.max*100, r.value ? 2 : 0) : 0}%"></i></span><span class="hv num">${fmt(r)}</span></div>`).join('')}</div>`;
+}
+function analyze(){
+  const log = S.log, byType = {}, pat = {}, miss = {}, gram = {};
+  for(const [t, id, type, ok, err] of log){
+    const bt = byType[type] || (byType[type] = {n:0, c:0}); bt.n++; if(ok) bt.c++;
+    if(!ok){ if(err && err !== 'other') pat[err] = (pat[err]||0) + 1; miss[id] = (miss[id]||0) + 1;
+      if(type === 'grammar'){ const g = GRAMMAR.find(x => x.id === id); if(g) gram[g.point] = (gram[g.point]||0) + 1; } }
+  }
+  const findAny = id => allWords().find(w => String(w.id) === String(id)) || GRAMMAR.find(g => g.id === id);
+  const top = Object.entries(miss).map(([id,n]) => ({it:findAny(id), n})).filter(x => x.it && !x.it.q).sort((a,b) => b.n - a.n).slice(0, 10);
+  const now = Date.now(), wk = 7*864e5;
+  const recent = log.filter(l => l[0] > now - wk), prev = log.filter(l => l[0] <= now - wk && l[0] > now - 2*wk);
+  const pct = a => a.length ? Math.round(a.filter(l => l[3]).length / a.length * 100) : null;
+  return {byType, pat, top, gram, total:log.length, acc:pct(log), recent:pct(recent), prev:pct(prev)};
+}
+let coach = null;
+function Analysis(){
+  const A = analyze();
+  const top = `<div class="top"><button class="back" data-go="home">‹ 홈</button><h2>약점 분석</h2><span style="min-width:60px"></span></div>`;
+  if(A.total < 10) return `<div class="screen">${top}<div class="card empty">문제를 10개 이상 풀면 분석이 시작돼요.<br>지금 ${A.total}개 풀었어요.</div>
+    <button class="btn primary" id="today">오늘의 학습 시작</button></div>`;
+  const trend = A.recent !== null && A.prev !== null ? (A.recent - A.prev) : null;
+  const typeRows = Object.keys(TYPES).filter(t => A.byType[t] && A.byType[t].n >= 3).map(t => ({label:TYPES[t], value:Math.round(A.byType[t].c/A.byType[t].n*100), max:100, n:A.byType[t].n}));
+  const weakType = typeRows.slice().sort((a,b) => a.value - b.value)[0];
+  const pats = Object.entries(A.pat).sort((a,b) => b[1] - a[1]);
+  const pmax = pats.length ? pats[0][1] : 1;
+  const gram = Object.entries(A.gram).sort((a,b) => b[1] - a[1]);
+  return `<div class="screen">${top}
+    <div class="card">
+      <div class="kpis">
+        <div><span>푼 문제</span><b class="num">${A.total}</b></div>
+        <div><span>전체 정답률</span><b class="num">${A.acc}<small>%</small></b></div>
+        <div><span>지난주 대비</span><b class="num">${trend === null ? '–' : (trend > 0 ? '+' : '') + trend}<small>${trend === null ? '' : '%p'}</small></b></div>
+      </div>
+    </div>
+    <div class="sec"><h3>유형별 정답률</h3>
+      <div class="card">${HBars(typeRows, r => `${r.value}%`)}
+      ${weakType ? `<p class="hint" style="margin-top:10px">가장 약한 유형은 <b>${weakType.label}</b>(${weakType.value}%)이에요.</p>` : ''}</div></div>
+    ${pats.length ? `<div class="sec"><h3>자주 하는 실수</h3>
+      <div class="list">${pats.map(([k,n]) => { const P = PATTERNS[k]; if(!P) return ''; return `<div class="item col">
+        <div class="hb"><span class="hl">${P.label}</span><span class="ht"><i style="width:${n/pmax*100}%"></i></span><span class="hv num">${n}회</span></div>
+        <p class="hint">${P.tip}</p>
+        <button class="btn plain sm" data-drill="${k}">이 실수만 연습하기</button></div>`; }).join('')}</div></div>` : ''}
+    ${A.top.length ? `<div class="sec"><h3>자주 틀리는 단어</h3>
+      <div class="list">${A.top.map(x => `<div class="item"><div class="main">${Row(x.it)}</div><span class="miss">${x.n}회</span></div>`).join('')}</div>
+      <button class="btn primary" id="drillTop">이 ${A.top.length}개 집중 훈련</button></div>` : ''}
+    ${gram.length ? `<div class="sec"><h3>헷갈리는 문법</h3>
+      <div class="list">${gram.map(([p,n]) => `<div class="item"><div class="main"><div class="w" style="font-size:17px">${esc(p)}</div></div><span class="miss">${n}회</span></div>`).join('')}</div>
+      <button class="btn plain" id="drillGram">틀린 문법 다시 풀기</button></div>` : ''}
+    <div class="sec"><h3>AI 코치</h3>
+      <div class="card" style="display:flex;flex-direction:column;gap:10px">
+        ${coach && coach.text ? `<div class="coach">${coach.text.split(/\n+/).map(l => `<p>${esc(l)}</p>`).join('')}</div>` : `<p class="hint">위 분석 결과를 바탕으로 무엇을 어떻게 외우면 좋을지, 자주 틀리는 단어의 암기 요령과 함께 알려 줘요.</p>`}
+        ${coach && coach.busy ? `<p class="status">분석 중…</p>` : `<button class="btn plain" id="coach" ${aiReady() ? '' : 'disabled'}>${coach && coach.text ? '다시 받기' : 'AI 조언 받기'}</button>`}
+        ${!aiReady() ? `<p class="hint">AI 기능은 설정에서 로그인하면 켜져요.</p>` : ''}
+        ${coach && coach.err ? `<p class="status err">${esc(coach.err)}</p>` : ''}
+      </div></div>
+  </div>`;
+}
+function drillPattern(k){
+  const P = PATTERNS[k];
+  const missedIds = new Set(S.log.filter(l => !l[3] && l[4] === k).map(l => String(l[1])));
+  let pool = allWords().filter(P.test);
+  const first = shuffle(pool.filter(w => missedIds.has(String(w.id))));
+  const rest = shuffle(pool.filter(w => !missedIds.has(String(w.id))));
+  const items = first.concat(rest).slice(0, 15).map(w => ({item:w, type: applicable(w, P.type) ? P.type : 'meaning'}));
+  startQuiz(shuffle(items));
+}
+async function askCoach(){
+  if(!aiReady() || (coach && coach.busy)) return;
+  const A = analyze();
+  const summary = {
+    total:A.total, accuracy:A.acc, lastWeek:A.recent, weekBefore:A.prev,
+    byType:Object.fromEntries(Object.entries(A.byType).map(([t,v]) => [TYPES[t], `${Math.round(v.c/v.n*100)}% of ${v.n}`])),
+    mistakePatterns:Object.fromEntries(Object.entries(A.pat).map(([k,n]) => [PATTERNS[k] ? PATTERNS[k].label : k, n])),
+    mostMissedWords:A.top.map(x => `${x.it.w}(${x.it.h}) = ${x.it.ko} · missed ${x.n}x`),
+    confusingGrammar:Object.entries(A.gram).map(([p,n]) => `${p} · missed ${n}x`),
+    knownWords:WORDS.filter(w => status(w.id) === 'known').length + '/' + WORDS.length
+  };
+  coach = {busy:true}; render();
+  try{
+    const text = await callClaude([{type:'text', text:`You are a friendly Japanese tutor for a Korean adult studying for JLPT N5. Here is their quiz analytics as JSON:\n${JSON.stringify(summary)}\n\nWrite in Korean, plain text, no markdown symbols, at most ~12 short lines:\n1) 한 줄 진단 (가장 큰 약점)\n2) 이번 주 학습 방법 2~3가지 (구체적으로, 이 앱의 '오늘의 학습', '약점 분석 > 이 실수만 연습하기', '오답노트'를 활용)\n3) 자주 틀리는 단어 중 최대 5개의 암기 요령 (단어 - 요령 형식, 한자 구성이나 발음 연상 활용)\n4) 문법 실수가 있으면 핵심 구분법 한두 줄\nBe encouraging but concrete.`}], 1500);
+    coach = {text:text.trim()};
+  }catch(e){ coach = {err:e.message || '조언을 받지 못했어요.'}; }
+  if(screen === 'analysis') render();
+}
+function seg(key, opts){ return `<div class="seg">${opts.map(([v,l]) => `<button data-set="${key}" data-v="${v}" aria-pressed="${String(setup[key]) === String(v)}">${l}</button>`).join('')}</div>`; }
+function Setup(){
+  return `<div class="screen">
+    <div class="top"><button class="back" data-go="home">‹ 홈</button><h2>골라서 풀기</h2><span style="min-width:60px"></span></div>
+    <div class="opt"><label>문제 유형</label>${seg('mode',[['mix','섞어서'],['meaning','뜻'],['reading','읽기'],['writing','한자'],['romaji','로마자']])}
+      <p class="hint">${{mix:'뜻·읽기·한자·뜻→단어를 섞어서 내요.',meaning:'단어를 보고 한국어 뜻을 골라요.',reading:'한자를 보고 히라가나 읽기를 골라요.',writing:'히라가나를 보고 맞는 한자를 골라요.',romaji:'읽는 법을 로마자로 직접 입력해요. (예: taberu)'}[setup.mode]}</p></div>
+    <div class="opt"><label>범위</label>${seg('range',[['all','전체'],['new','안 푼 단어'],['note','오답만']])}</div>
+    <div class="opt"><label>문항 수</label>${seg('count',[[10,'10'],[20,'20'],[50,'50']])}</div>
+    <button class="btn primary" id="startSetup">시작</button>
+  </div>`;
+}
+const MARK_OK = `<svg class="mark" viewBox="0 0 100 100"><path d="M62 14 C30 8 10 30 14 56 C18 82 52 92 74 78 C94 64 92 30 70 18 C64 15 58 14 54 15"/></svg>`;
+const MARK_NG = `<svg class="mark" viewBox="0 0 100 100"><path d="M20 18 L82 84"/><path d="M80 16 L22 82"/></svg>`;
+const DIFF_LABEL = {dakuten:'탁음·반탁음(゛゜)이 달라요', sokuon:'촉음(っ)이 있고 없고가 달라요', long:'장음(길게 읽는 소리)이 달라요', yoon:'요음(작은 ゃゅょ)이 달라요'};
+function choiceNote(x, c){
+  const P = allWords(), it = x.item;
+  if(x.type === 'meaning'){ const ws = P.filter(w => w.ko === c); return ws.length ? ws.slice(0,2).map(w => `${w.w}${w.hasKanji ? `(${w.h})` : ''}`).join(', ') + '의 뜻' : ''; }
+  if(x.type === 'reverse' || x.type === 'writing'){ const w = P.find(w => w.w === c); return w ? `${w.hasKanji ? w.h + ' · ' : ''}${w.ko}` : ''; }
+  if(x.type === 'reading'){
+    const ws = P.filter(w => w.hh === c && w.hasKanji && w.w !== it.w);
+    if(ws.length) return `${ws[0].w}(${ws[0].ko})의 읽기`;
+    const k = classify('reading', it, c); return (DIFF_LABEL[k] || '다른 단어의 읽기') + ' · 이 단어에는 없는 읽기';
+  }
+  return '';
+}
+function Answer(x, ok){
+  const it = x.item, verdict = `<div class="v">${ok ? '정답이에요' : quiz.chosen === null ? '모르겠어요 · 오답노트에 저장' : '오답 · 오답노트에 저장'}</div>`;
+  if(x.type === 'grammar') return `<div class="ans ${ok?'':'ng'}">${verdict}
+    <div class="w" style="font-size:20px">${esc(it.q.replace(/（\s*　*\s*）|\(\s*\)|＿+/, it.choices[it.answer]))}</div>
+    ${it.explain ? `<p>${esc(it.explain)}</p>` : ''}${it.point ? `<p class="muted small">문법 포인트 · ${esc(it.point)}</p>` : ''}</div>`;
+  const others = (x.choices || []).filter(c => c !== x.correct).map(c => ({c, note:choiceNote(x, c)})).filter(o => o.note);
+  let why = '';
+  if(!ok && quiz.chosen !== null){
+    const k = classify(x.type, it, quiz.chosen), P = PATTERNS[k];
+    if(P && k !== 'idk') why = `<p class="tipline"><b>${P.label}</b> · ${esc(P.tip)}</p>`;
+  }
+  return `<div class="ans ${ok?'':'ng'}">${verdict}
+    <div class="w">${esc(it.w)}</div><div class="r">${esc(it.h)} · ${esc(it.ro)}</div>
+    <p>${esc(it.ko)}${it.en ? ` <span class="muted small">${esc(it.en)}</span>` : ''}</p>
+    ${why}
+    ${others.length ? `<div class="others"><div class="olabel">다른 보기</div>${others.map(o => `<div class="orow"><span class="${x.jp?'jp':''}">${esc(o.c)}</span><span class="muted">${esc(o.note)}</span></div>`).join('')}</div>` : ''}
+  </div>`;
+}
+function Quiz(){
+  const x = quiz.q, n = quiz.items.length;
+  let body;
+  if(x.input){
+    body = `<form class="typein" id="typein" autocomplete="off"><input id="ti" class="${quiz.done ? (quiz.ok?'right':'wrong') : ''}" value="${esc(quiz.chosen||'')}" placeholder="romaji" autocapitalize="off" autocorrect="off" spellcheck="false" ${quiz.done?'disabled':''}><button class="btn primary" ${quiz.done?'disabled':''}>확인</button></form>`;
+  } else {
+    body = `<div class="choices">${x.choices.map((c,i) => {
+      let cls = ''; if(quiz.done) cls = c === x.correct ? 'right' : c === quiz.chosen ? 'wrong' : 'dim';
+      const rw = (x.ruby || (quiz.done && x.type === 'writing')) ? allWords().find(w => w.w === c && w.hasKanji) : null;
+      return `<button class="choice ${x.jp?'jp':''} ${cls}" data-i="${i}" ${quiz.done?'disabled':''}><span>${esc(c)}${rw ? `<small class="rd">${esc(rw.h)}</small>` : ''}</span></button>`; }).join('')}</div>`;
+  }
+  return `<div class="screen">
+    <div class="qbar"><button class="x" id="quit">그만</button><div class="bar"><i style="width:${(quiz.i + (quiz.done?1:0))/n*100}%"></i></div><span class="count num">${quiz.i+1}/${n}</span></div>
+    <div class="prompt">${quiz.done ? (quiz.ok ? MARK_OK : MARK_NG) : ''}<div class="tag">${TYPES[x.type]}</div>
+      <div class="big ${x.ko?'ko':''} ${x.sent?'sent':''}">${esc(x.prompt)}</div>${x.sub ? `<div class="sub ${x.type==='meaning'?'jp':''}">${esc(x.sub)}</div>` : ''}<div class="ask">${esc(x.ask)}</div></div>
+    ${body}
+    ${quiz.done ? Answer(x, quiz.ok) + `<button class="btn primary" id="next">${quiz.i+1 < n ? '확인' : '확인 · 결과 보기'}</button>` : `<button class="btn quiet" id="idk">모르겠어요</button>`}
+  </div>`;
+}
+function Row(it){
+  if(it.q) return `<div class="w" style="font-size:16px">${esc(it.q)}</div><div class="m">정답 ${esc(it.choices[it.answer])}</div>`;
+  return `<div class="w">${esc(it.w)}${it.hasKanji ? `<small>${esc(it.h)}</small>` : ''}</div><div class="m">${esc(it.ko)} · ${esc(it.ro)}</div>`;
+}
+function Result(){
+  const ok = result.filter(l => l.ok).length, wrong = result.filter(l => !l.ok);
+  return `<div class="screen">
+    <div class="card score"><div class="stamp"><b class="num">${ok}/${result.length}</b><span>${result.length && ok/result.length >= .8 ? 'よくできました' : 'がんばろう'}</span></div>
+      <p class="muted" style="margin:0">${todayCount() >= S.goal ? `오늘 목표 달성 · ${streak()}일 연속` : `오늘 ${todayCount()}/${S.goal}문제`}</p></div>
+    ${wrong.length ? `<div class="list">${wrong.map(l => `<div class="item"><div class="main">${Row(l.item)}</div></div>`).join('')}</div>
+      <button class="btn primary" id="retry">틀린 ${wrong.length}개 다시 풀기</button>` : ''}
+    <button class="btn plain" data-go="home">홈으로</button>
+  </div>`;
+}
+function Note(){
+  const list = noteList();
+  return `<div class="screen">
+    <div class="top"><button class="back" data-go="home">‹ 홈</button><h2>오답노트</h2><span style="min-width:60px"></span></div>
+    ${list.length ? `<button class="btn primary" id="review">${list.length}개 다시 풀기</button>
+      <p class="hint" style="text-align:center">두 번 연속 맞히면 자동으로 빠져요</p>
+      <div class="list">${list.map(it => `<div class="item"><div class="main">${Row(it)}<div class="miss">${S.w[it.id].x}번 틀림</div></div><button class="btn plain sm" data-done="${it.id}">외웠음</button></div>`).join('')}</div>`
+    : `<div class="card empty">틀린 문제가 없어요.<br>테스트에서 틀리거나 ‘모르겠어요’를 누르면 여기에 모여요.</div>`}
+  </div>`;
+}
+
+/* --- AI (교재 사진 → 문제, AI 코치) : API 키는 Supabase Edge Function에만 있음 --- */
+async function callClaude(content, maxTokens, signal){
+  if(!aiReady()) throw new Error('로그인해야 AI 기능을 쓸 수 있어요.');
+  const res = await fetch(SUPABASE_URL + '/functions/v1/claude', {method:'POST', signal,
+    headers:{'content-type':'application/json', 'authorization':'Bearer ' + session.access_token, 'apikey':SUPABASE_KEY},
+    body: JSON.stringify({max_tokens:maxTokens, messages:[{role:'user', content}]})});
+  if(!res.ok) throw new Error(res.status === 429 ? '요청이 많아요. 잠시 후 다시 해 주세요.' : res.status === 401 ? '로그인이 만료됐어요. 설정에서 다시 로그인해 주세요.' : res.status === 404 ? 'AI 함수(claude)가 아직 배포되지 않았어요.' : `AI 요청 실패 (${res.status})`);
+  const data = await res.json();
+  return (data.content || []).map(b => b.text || '').join('');
+}
+let photos = [], gen = null, genMsg = '', genErr = false, delId = null;
+const PROMPT = `You are helping a Korean learner of Japanese (JLPT N5) who photographed textbook pages they just studied.
+Extract ONLY material that appears on the pages. Reply with ONE JSON object and nothing else:
+{"title":"short Korean lesson title","words":[{"w":"word as written","h":"reading in hiragana (katakana for loanwords)","ko":"short Korean meaning","en":"short English meaning"}],
+ "grammar":[{"point":"pattern e.g. 〜に あります","explain":"1-2 sentence Korean explanation","questions":[{"q":"Japanese sentence with the target part as （　）; after every word containing kanji add its reading in parentheses, e.g. 学校(がっこう)","choices":["4 options; same reading-in-parentheses rule for kanji"],"answer":0,"explain":"short Korean reason"}]}]}
+Rules: up to 40 words, dictionary form, no duplicates. Up to 6 grammar points, 3 questions each, exactly 4 plausible choices, answer = 0-based index. Empty arrays if none. Natural Korean.`;
+function shrink(file){
+  return new Promise(res => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => { const sc = Math.min(1, 1600 / Math.max(img.width, img.height)); const c = document.createElement('canvas');
+      c.width = Math.round(img.width*sc); c.height = Math.round(img.height*sc); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', 0.85).split(',')[1]); };
+    img.onerror = () => { URL.revokeObjectURL(url); res(null); };
+    img.src = url;
+  });
+}
+function addSet(raw){
+  const seen = new Set();
+  const words = (raw.words||[]).filter(x => x && x.w && x.ko && !seen.has(x.w) && seen.add(x.w)).map(x => ({w:String(x.w), h:String(x.h||x.w), ko:String(x.ko), en:String(x.en||'')}));
+  const grammar = (raw.grammar||[]).map(g => ({point:String(g.point||''), explain:String(g.explain||''),
+    questions:(g.questions||[]).filter(x => x && x.q && Array.isArray(x.choices) && x.choices.length === 4 && x.answer >= 0 && x.answer < 4).map(x => ({q:String(x.q), choices:x.choices.map(String), answer:+x.answer, explain:String(x.explain||'')}))}))
+    .filter(g => g.questions.length);
+  if(!words.length && !grammar.length) throw new Error('단어나 문법을 찾지 못했어요.');
+  const set = {id:Date.now().toString(36), t:Date.now(), title:String(raw.title||'교재 세트').slice(0,40), words, grammar};
+  S.sets.unshift(set); rebuild(); save();
+  return `‘${set.title}’ 추가 · 단어 ${words.length}개, 문법 ${grammar.reduce((n,g)=>n+g.questions.length,0)}문제`;
+}
+const parseJSON = text => JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
+async function generate(){
+  if(gen || !photos.length || !aiReady()) return;
+  gen = new AbortController(); genErr = false; genMsg = '사진을 읽고 문제를 만드는 중… (30초~1분)'; render();
+  try{
+    const imgs = (await Promise.all(photos.map(p => shrink(p.file)))).filter(Boolean);
+    if(!imgs.length) throw new Error('사진을 열 수 없어요.');
+    const text = await callClaude([...imgs.map(d => ({type:'image', source:{type:'base64', media_type:'image/jpeg', data:d}})), {type:'text', text:PROMPT}], 8000, gen.signal);
+    genMsg = addSet(parseJSON(text)); photos = [];
+  }catch(e){
+    genErr = e.name !== 'AbortError'; genMsg = e.name === 'AbortError' ? '멈췄어요.' : (e instanceof SyntaxError ? '결과를 읽지 못했어요. 다시 해 주세요.' : e.message || '실패했어요. 다시 해 주세요.');
+  }
+  gen = null; if(screen === 'photo') render();
+}
+function Photo(){
+  const top = `<div class="top"><button class="back" data-go="home">‹ 홈</button><h2>교재 사진</h2><span style="min-width:60px"></span></div>`;
+  return `<div class="screen">${top}
+    <div class="card" style="display:flex;flex-direction:column;gap:12px">
+      <p class="small muted" style="margin:0">공부한 페이지를 찍어 올리면 그 페이지의 단어와 문법으로 문제를 만들어요.</p>
+      ${aiReady() ? `
+      ${photos.length ? `<div class="thumbs">${photos.map((p,i) => `<div class="thumb"><img src="${p.url}" alt=""><button data-rm="${i}" ${gen?'disabled':''}>✕</button></div>`).join('')}</div>` : ''}
+      <label class="btn plain file">${photos.length ? '사진 더 추가' : '사진 찍기 / 고르기'}<input type="file" id="pick" accept="image/*" multiple ${gen?'disabled':''}></label>
+      ${gen ? `<button class="btn plain" id="stop">그만두기</button>` : `<button class="btn primary" id="make" ${photos.length?'':'disabled'}>문제 만들기</button>`}`
+      : `<p class="hint">설정에서 로그인하면 사진 분석이 켜져요. 대신 Claude 채팅에 사진을 보내고 받은 세트 코드를 아래에 붙여 넣으면 똑같이 쓸 수 있어요.</p>`}
+      ${genMsg ? `<p class="status ${genErr?'err':''}">${esc(genMsg)}</p>` : ''}
+      <details ${aiReady() ? '' : 'open'}><summary class="small muted">Claude 채팅에서 받은 세트 코드 붙여넣기</summary>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+          <textarea class="field" id="setCode" placeholder='{"title": "...", "words": [...], "grammar": [...]}'></textarea>
+          <button class="btn plain" id="importSet">세트 추가</button></div></details>
+    </div>
+    ${S.sets.length ? `<div class="list">${S.sets.map(s => `<div class="item"><div class="main"><div style="font-weight:600">${esc(s.title)}</div>
+      <div class="m">단어 ${s.words.length} · 문법 ${s.grammar.reduce((n,g)=>n+g.questions.length,0)}문제</div></div>
+      <button class="btn primary sm" data-play="${s.id}">풀기</button><button class="btn plain sm" data-del="${s.id}" style="${delId===s.id?'color:var(--red);border-color:var(--red)':''}">${delId===s.id?'삭제?':'삭제'}</button></div>`).join('')}</div>` : ''}
+  </div>`;
+}
+let bookMsg = '', bookErr = false, delBook = null;
+function Books(){
+  const all = [{id:'n5', name:'JLPT N5', n:N5.length, builtin:true}].concat(S.books.map(b => ({id:b.id, name:b.name, n:b.words.length})));
+  const known = id => Object.keys(S.w).filter(k => (id === 'n5' ? !k.includes(':') && !k.startsWith('b') && !k.startsWith('g') : k.startsWith(id + ':')) && S.w[k].c > 0 && !inNote(k)).length;
+  return `<div class="screen">
+    <div class="top"><button class="back" data-go="home">‹ 홈</button><h2>단어장</h2><span style="min-width:60px"></span></div>
+    <div class="list">${all.map(b => `<div class="item">
+      <button class="main pickbook" data-book="${b.id}"><span class="radio ${S.book === b.id ? 'on' : ''}"></span><span><b>${esc(b.name)}</b><span class="m"> · ${b.n}단어 · 맞힌 단어 ${known(b.id)}</span></span></button>
+      ${b.builtin ? '' : `<button class="btn plain sm" data-delbook="${b.id}" style="${delBook===b.id?'color:var(--red);border-color:var(--red)':''}">${delBook===b.id?'삭제?':'삭제'}</button>`}</div>`).join('')}</div>
+    <div class="card" style="display:flex;flex-direction:column;gap:10px">
+      <b>단어장 올리기</b>
+      <p class="hint">엑셀(.xlsx)이나 CSV 파일을 올리면 새 단어장으로 추가돼요. 첫 줄에 <b>일본어단어 · 한국어 뜻 · 영어 뜻 · Hiragana</b> 제목이 있으면 순서는 상관없어요(영어 뜻은 없어도 돼요). 처음 받은 N5 파일과 같은 형식이면 그대로 올리면 돼요.</p>
+      <label class="btn primary file">파일 고르기<input type="file" id="bookFile" accept=".xlsx,.xls,.csv,.tsv,.txt"></label>
+      ${bookMsg ? `<p class="status ${bookErr?'err':''}">${esc(bookMsg)}</p>` : ''}
+      <p class="hint">진도와 오답노트는 단어장마다 따로 쌓여요. 교재 사진으로 만든 세트는 어느 단어장에서든 같이 나와요.</p>
+    </div>
+  </div>`;
+}
+function Settings(){
+  return `<div class="screen">
+    <div class="top"><button class="back" data-go="home">‹ 홈</button><h2>설정</h2><span style="min-width:60px"></span></div>
+    <div class="opt"><label>하루 목표</label><div class="seg">${[10,20,30,50].map(v => `<button data-goal="${v}" aria-pressed="${S.goal===v}">${v}문제</button>`).join('')}</div></div>
+    <div class="opt"><label>단어장</label><button class="btn plain" data-go="books">${esc(bookName())} · ${WORDS.length}단어 — 바꾸기 / 올리기</button></div>
+    <div class="opt"><label>계정 동기화 (아이폰 ↔ 태블릿 자동 동기화 · AI 기능)</label>
+      ${!SUPABASE_URL ? `<div class="card small">연결 전 · index.html 위쪽 <code>SUPABASE_URL</code>, <code>SUPABASE_KEY</code>를 채우면 켜져요.</div>`
+      : !sb ? `<div class="card small">${esc(cloudMsg || '연결 중…')}</div>`
+      : session ? `<div class="card" style="display:flex;flex-direction:column;gap:10px">
+          <div class="small"><b>${esc(session.user.email)}</b> 로그인됨</div>
+          <div class="small muted">${esc(cloudMsg || '')}</div>
+          <div class="row2"><button class="btn plain sm" id="syncNow">지금 동기화</button><button class="btn plain sm" id="logout">로그아웃</button></div></div>`
+      : `<div class="card" style="display:flex;flex-direction:column;gap:10px">
+          <input class="field" id="email" type="email" placeholder="이메일" autocomplete="username" autocapitalize="off">
+          <input class="field" id="pw" type="password" placeholder="비밀번호" autocomplete="current-password">
+          <button class="btn primary" id="login">로그인</button>
+          ${cloudMsg ? `<p class="status ${cloudErr?'err':''}">${esc(cloudMsg)}</p>` : ''}
+          <p class="hint">로그인하면 이 기기의 기록과 서버 기록이 합쳐지고, 이후로는 자동으로 맞춰져요.</p></div>`}
+    </div>
+    <details class="opt"><summary class="small muted">백업 코드로 옮기기 (로그인 없이)</summary>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+      <button class="btn plain" id="copy">백업 코드 복사</button>
+      <textarea class="field" id="backup" placeholder="다른 기기에서 복사한 백업 코드를 여기에 붙여 넣기"></textarea>
+      <button class="btn plain" id="restore">불러오기</button>
+      <p class="status" id="bmsg"></p></div></details>
+  </div>`;
+}
+
+function render(){
+  app.innerHTML = ({home:Home, setup:Setup, quiz:Quiz, result:Result, note:Note, photo:Photo, settings:Settings, analysis:Analysis, books:Books}[screen] || Home)();
+  const $ = s => app.querySelector(s), $$ = s => app.querySelectorAll(s);
+  $$('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
+  const on = (s, f) => { const el = $(s); if(el) el.onclick = f; };
+  on('#today', startToday);
+  on('#startSetup', startSetup);
+  $$('[data-set]').forEach(b => b.onclick = () => { const k = b.dataset.set; setup[k] = k === 'count' ? +b.dataset.v : b.dataset.v; try{ localStorage.setItem('n5-setup', JSON.stringify(setup)); }catch(e){} render(); });
+  if(screen === 'quiz'){
+    $$('.choice').forEach(b => b.onclick = () => answer(quiz.q.choices[+b.dataset.i]));
+    const f = $('#typein'); if(f){ f.onsubmit = e => { e.preventDefault(); const v = $('#ti').value.trim(); if(v) answer(v); }; if(!quiz.done) $('#ti').focus(); }
+    on('#idk', () => answer(null));
+    on('#next', () => { quiz.i++; next(); });
+    on('#quit', finish);
+  }
+  on('#retry', () => startQuiz(shuffle(result.filter(l => !l.ok).map(l => ({item:l.item, type:l.type})))));
+  on('#review', () => startQuiz(shuffle(noteList().map(it => it.q ? {item:it, type:'grammar'} : itemFor(it, Object.keys(TYPES).filter(t => t !== 'grammar'))))));
+  $$('[data-done]').forEach(b => b.onclick = () => { const r = S.w[b.dataset.done]; r.n = []; r.s = 0; r.t = Date.now(); save(); render(); });
+  on('#importSet', () => { try{ genMsg = addSet(parseJSON($('#setCode').value)); genErr = false; }catch(e){ genMsg = '코드를 읽지 못했어요. 받은 코드를 그대로 전부 붙여 넣어 주세요.'; genErr = true; } render(); });
+  $$('[data-day]').forEach(g => g.onclick = () => { daySel = +g.dataset.day; render(); });
+  $$('[data-drill]').forEach(b => b.onclick = () => drillPattern(b.dataset.drill));
+  on('#drillTop', () => startQuiz(shuffle(analyze().top.map(x => itemFor(x.it, ['meaning','reading','writing','reverse'])))));
+  on('#drillGram', () => { const ids = new Set(S.log.filter(l => !l[3] && l[2] === 'grammar').map(l => l[1])); startQuiz(shuffle(GRAMMAR.filter(g => ids.has(g.id)).map(g => ({item:g, type:'grammar'})))); });
+  on('#coach', askCoach);
+  on('#login', async () => { const email = $('#email').value.trim(), pw = $('#pw').value; if(!email || !pw) return;
+    cloudMsg = '로그인 중…'; cloudErr = false; render();
+    const {data, error} = await sb.auth.signInWithPassword({email, password:pw});
+    if(error){ cloudMsg = /invalid/i.test(error.message) ? '이메일이나 비밀번호가 맞지 않아요.' : error.message; cloudErr = true; render(); return; }
+    session = data.session; cloudMsg = ''; await pull(); render(); });
+  on('#logout', async () => { await sb.auth.signOut(); session = null; cloudMsg = '로그아웃했어요. 이 기기의 기록은 그대로 남아 있어요.'; render(); });
+  on('#syncNow', async () => { await pull(); render(); });
+  $$('[data-book]').forEach(b => b.onclick = () => { S.book = b.dataset.book; applyBook(); save(); bookMsg = ''; render(); });
+  $$('[data-delbook]').forEach(b => b.onclick = () => { const id = b.dataset.delbook; if(delBook !== id){ delBook = id; return render(); }
+    delBook = null; S.books = S.books.filter(x => x.id !== id); S.del.push(id); for(const k in S.w) if(k.startsWith(id + ':')) delete S.w[k];
+    if(S.book === id) S.book = 'n5'; applyBook(); save(); render(); });
+  const bf = $('#bookFile'); if(bf) bf.onchange = async () => { const f = bf.files[0]; if(!f) return; bookMsg = '읽는 중…'; bookErr = false; render();
+    try{ bookMsg = await importBook(f); }catch(e){ bookMsg = e.message || '파일을 읽지 못했어요.'; bookErr = true; } render(); };
+  const pk = $('#pick'); if(pk) pk.onchange = () => { [...pk.files].forEach(f => photos.push({file:f, url:URL.createObjectURL(f)})); genMsg = ''; render(); };
+  $$('[data-rm]').forEach(b => b.onclick = () => { photos.splice(+b.dataset.rm, 1); render(); });
+  on('#make', generate);
+  on('#stop', () => gen && gen.abort());
+  $$('[data-play]').forEach(b => b.onclick = () => {
+    const id = b.dataset.play;
+    startQuiz(shuffle(CUSTOM.filter(w => w.set === id).map(w => itemFor(w, MODES.mix)).concat(GRAMMAR.filter(g => g.set === id).map(g => ({item:g, type:'grammar'})))));
+  });
+  $$('[data-del]').forEach(b => b.onclick = () => { const id = b.dataset.del; if(delId !== id){ delId = id; return render(); } delId = null; S.sets = S.sets.filter(s => s.id !== id); S.del.push(id); rebuild(); save(); render(); });
+  $$('[data-goal]').forEach(b => b.onclick = () => { S.goal = +b.dataset.goal; save(); render(); });
+  on('#copy', async () => { const code = JSON.stringify(S); const msg = $('#bmsg');
+    try{ await navigator.clipboard.writeText(code); msg.textContent = '복사했어요. 다른 기기의 설정에서 붙여 넣으세요.'; }
+    catch(e){ const t = $('#backup'); t.value = code; t.select(); msg.textContent = '자동 복사가 안 돼서 아래 칸에 넣었어요. 전체 선택해서 복사하세요.'; } });
+  on('#restore', () => { const msg = $('#bmsg');
+    try{ const d = JSON.parse($('#backup').value); if(!d || !d.w) throw 0; S = normalize(d); rebuild(); applyBook(); save(); msg.textContent = '불러왔어요.'; }
+    catch(e){ msg.textContent = '백업 코드가 올바르지 않아요.'; msg.classList.add('err'); } });
+}
+document.addEventListener('keydown', e => {
+  if(screen !== 'quiz' || !quiz || e.target.tagName === 'INPUT') return;
+  if(!quiz.done && quiz.q.choices && /^[1-4]$/.test(e.key)) answer(quiz.q.choices[+e.key - 1]);
+  else if(quiz.done && e.key === 'Enter'){ quiz.i++; next(); }
+});
+/* ===== Supabase 동기화 ===== */
+let sb = null, session = null, cloudMsg = '', cloudErr = false, pushTimer = null, pushing = false, pushAgain = false;
+const aiReady = () => !!(sb && session);
+function mergeState(a, b){
+  const m = normalize({});
+  const newer = (b.u || 0) > (a.u || 0) ? b : a;
+  m.goal = newer.goal; m.book = newer.book; m.u = Math.max(a.u || 0, b.u || 0);
+  m.del = [...new Set([...(a.del||[]), ...(b.del||[])])];
+  const dels = new Set(m.del);
+  for(const src of [a, b]) for(const [k, r] of Object.entries(src.w || {})){ const cur = m.w[k]; if(!cur || (r.t || 0) > (cur.t || 0)) m.w[k] = r; }
+  for(const src of [a, b]) for(const [k, d] of Object.entries(src.days || {})){ const v = typeof d === 'number' ? {n:d, c:0} : d; if(!m.days[k] || v.n > m.days[k].n) m.days[k] = v; }
+  const seen = new Set(); m.log = [];
+  for(const l of [...(a.log||[]), ...(b.log||[])].sort((x,y) => x[0] - y[0])){ const key = l[0] + '|' + l[1]; if(!seen.has(key)){ seen.add(key); m.log.push(l); } }
+  m.log = m.log.slice(-4000);
+  const union = (x, y) => { const map = new Map(); for(const it of [...(x||[]), ...(y||[])]) if(!dels.has(it.id)) map.set(it.id, it); return [...map.values()]; };
+  m.sets = union(a.sets, b.sets).sort((x,y) => (y.t||0) - (x.t||0)); m.books = union(a.books, b.books);
+  return m;
+}
+async function pull(){
+  if(!sb || !session) return;
+  try{
+    const {data, error} = await sb.from('n5_progress').select('data').eq('user_id', session.user.id).maybeSingle();
+    if(error) throw error;
+    if(data && data.data) S = mergeState(S, normalize(data.data));
+    rebuild(); applyBook();
+    try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
+    await push();
+  }catch(e){ cloudMsg = '동기화 실패: ' + (e.message || e); cloudErr = true; }
+}
+async function push(){
+  if(!sb || !session) return;
+  if(pushing){ pushAgain = true; return; }
+  pushing = true;
+  try{
+    const {error} = await sb.from('n5_progress').upsert({user_id:session.user.id, data:S, updated_at:new Date().toISOString()});
+    if(error) throw error;
+    cloudMsg = '동기화됨 · ' + new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}); cloudErr = false;
+  }catch(e){ cloudMsg = '저장 실패: ' + (e.message || e); cloudErr = true; }
+  pushing = false;
+  if(pushAgain){ pushAgain = false; push(); }
+}
+function schedulePush(){ if(!sb || !session) return; clearTimeout(pushTimer); pushTimer = setTimeout(push, 2000); }
+async function initCloud(){
+  if(!SUPABASE_URL || !SUPABASE_KEY) return;
+  try{
+    await new Promise((ok, bad) => { const sc = document.createElement('script');
+      sc.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js'; sc.onload = ok; sc.onerror = bad; document.head.appendChild(sc); });
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {auth:{persistSession:true, autoRefreshToken:true}});
+    const {data} = await sb.auth.getSession(); session = data.session;
+    sb.auth.onAuthStateChange((_e, s) => { session = s; });
+    if(session) await pull();
+  }catch(e){ cloudMsg = '서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.'; }
+  if(screen !== 'quiz') render();
+}
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && session && screen !== 'quiz') pull().then(() => { if(screen !== 'quiz') render(); }); });
+render();
+initCloud();
+</script>
+</body>
+</html>
