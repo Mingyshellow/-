@@ -194,6 +194,37 @@ details summary{cursor:pointer}
 .pickbook{display:flex;align-items:center;gap:12px;text-align:left;min-height:44px}
 .radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none}
 .radio.on{border:6px solid var(--ai)}
+.sumlink{align-self:flex-start;text-align:left;font-size:14px;padding:4px 0;min-width:0}
+.daynav{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:14px;padding:6px}
+.daynav button{width:44px;height:40px;border-radius:10px;font-size:22px;color:var(--ai)}
+.daynav button:disabled{opacity:.25}
+.delta{display:block;font-size:12px;margin-top:2px}
+.delta.up{color:var(--ok)} .delta.down{color:var(--red)}
+.cnt{font-size:13px;color:var(--muted);font-weight:600;margin-left:4px} .cnt.red{color:var(--red)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.wchip{display:inline-flex;align-items:baseline;gap:6px;background:var(--card);border-radius:10px;padding:7px 11px;font-size:14px}
+.wchip .jp{font-size:17px}
+.wchip span{color:var(--muted);font-size:13px}
+.card .wchip{background:var(--soft)}
+.fix{font-size:12px;font-weight:700;color:var(--red);white-space:nowrap}
+.fix.ok{color:var(--ok)}
+.toplinks{display:flex;gap:4px}
+.toplinks .link{min-width:0;padding:10px 6px}
+.welcome{display:flex;flex-direction:column;gap:2px;text-align:left;border:1.5px dashed var(--ai)}
+.welcome b{font-size:16px} .welcome span{font-size:14px;color:var(--ai)}
+.guide{display:flex;flex-direction:column;gap:10px}
+.guide details{padding:0}
+.guide summary{padding:16px 18px;font-weight:700;font-size:16px;list-style:none;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.guide summary::-webkit-details-marker{display:none}
+.guide summary::after{content:"+";color:var(--muted);font-weight:400;font-size:20px}
+.guide details[open] summary::after{content:"−"}
+.gbody{padding:0 18px 16px;font-size:15px;line-height:1.7}
+.gbody ol,.gbody ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.gbody dl{margin:0;display:flex;flex-direction:column;gap:2px}
+.gbody dt{font-weight:700;margin-top:8px} .gbody dt:first-child{margin-top:0}
+.gbody dd{margin:0;color:var(--muted)}
+.gbody p{margin:10px 0 0}
+kbd{font-family:ui-monospace,monospace;font-size:12px;border:1px solid var(--line);border-radius:4px;padding:0 5px}
 .row2>*{flex:1}
 </style>
 </head>
@@ -266,7 +297,7 @@ let WORDS = N5;
 const KEY = 'n5-words-v1';
 let S = {w:{}, days:{}, sets:[], goal:20, log:[], books:[], book:'n5', del:[], u:0};
 function normalize(d){
-  const s = {w:{}, days:{}, sets:[], goal:20, log:[], books:[], book:'n5', del:[], u:0, ...d};
+  const s = {w:{}, days:{}, sets:[], goal:20, log:[], books:[], book:'n5', del:[], u:0, grad:{}, ...d};
   for(const k in s.days) if(typeof s.days[k] === 'number') s.days[k] = {n:s.days[k], c:0};
   return s;
 }
@@ -379,7 +410,7 @@ function classify(type, item, chosen){
     if([...chosen].some(c => HAS_KANJI.test(c) && item.w.includes(c))) return 'similar';
     return 'other';
   } else return 'other';
-  if(a === b) return 'other';
+  if(!a || !b || a === b) return 'other';
   if(plain(a) === plain(b)) return 'dakuten';
   if(noSoku(a) === noSoku(b)) return 'sokuon';
   if(noLong(a) === noLong(b)) return 'long';
@@ -403,7 +434,7 @@ function record(item, type, ok, chosen){
   const dk = dayKey(), d = S.days[dk] || (S.days[dk] = {n:0, c:0}); d.n++; if(ok) d.c++;
   S.log.push([Date.now(), item.id, type, ok ? 1 : 0, ok ? '' : classify(type, item, chosen)]);
   if(S.log.length > 4000) S.log = S.log.slice(-4000);
-  if(ok){ r.c++; if(r.n.length){ r.s++; if(r.s >= 2){ r.n = []; r.s = 0; } } }
+  if(ok){ r.c++; if(r.n.length){ r.s++; if(r.s >= 2){ r.n = []; r.s = 0; markGrad(item.id); } } }
   else { r.x++; r.s = 0; if(!r.n.includes(type)) r.n.push(type); }
   save();
 }
@@ -534,7 +565,8 @@ function Home(){
   const d = days[daySel] || days[13];
   const dacc = d.n ? Math.round(d.c/d.n*100) : null;
   return `<div class="screen">
-    <div class="top"><button class="bookbtn" data-go="books"><h1>${esc(bookName())}</h1><span>단어장 ▾</span></button><button class="link" data-go="settings">설정</button></div>
+    <div class="top"><button class="bookbtn" data-go="books"><h1>${esc(bookName())}</h1><span>단어장 ▾</span></button><span class="toplinks"><button class="link" data-go="guide">사용법</button><button class="link" data-go="settings">설정</button></span></div>
+    ${!S.log.length ? `<button class="card welcome" data-go="guide"><b>처음이세요?</b><span>3분이면 읽는 사용법부터 보고 시작하세요 ›</span></button>` : ''}
     <div class="card dash">
       <div class="kpis">
         <div><span>오늘</span><b class="num">${n}<small>/${g}</small></b></div>
@@ -546,6 +578,7 @@ function Home(){
         <div class="charthead"><span>최근 2주 학습량 <span class="legend">┄ 목표 ${g}</span></span><span class="num">${d.k === dayKey() ? '오늘' : `${d.label}(${d.wd})`} · ${d.n}문제${dacc === null ? '' : ` · 정답 ${dacc}%`}</span></div>
         ${DayChart(days, g, daySel)}
       </div>
+      <button class="link sumlink" data-sum="${d.k}">${d.k === dayKey() ? '오늘' : d.label} 공부 요약 보기 ›</button>
       <button class="btn primary" id="today">${done ? '조금 더 풀기' : '오늘의 학습 시작'}</button>
     </div>
     <div class="menu">
@@ -721,6 +754,7 @@ function Result(){
       <p class="muted" style="margin:0">${todayCount() >= S.goal ? `오늘 목표 달성 · ${streak()}일 연속` : `오늘 ${todayCount()}/${S.goal}문제`}</p></div>
     ${wrong.length ? `<div class="list">${wrong.map(l => `<div class="item"><div class="main">${Row(l.item)}</div></div>`).join('')}</div>
       <button class="btn primary" id="retry">틀린 ${wrong.length}개 다시 풀기</button>` : ''}
+    <button class="btn plain" data-sum="${dayKey()}">오늘 공부 요약 보기</button>
     <button class="btn plain" data-go="home">홈으로</button>
   </div>`;
 }
@@ -825,9 +859,157 @@ function Books(){
     </div>
   </div>`;
 }
+/* ===== 하루 요약 ===== */
+let sumDay = dayKey();
+function markGrad(id){ const k = dayKey(); S.grad = S.grad || {}; const a = S.grad[k] || (S.grad[k] = []); if(!a.includes(String(id))) a.push(String(id)); }
+function dayRange(k){ const d = new Date(k + 'T00:00:00'); const st = d.getTime(); d.setDate(d.getDate() + 1); return [st, d.getTime()]; }
+function findAnyItem(id){ return allWords().find(w => String(w.id) === String(id)) || GRAMMAR.find(g => g.id === id); }
+function daySummary(k){
+  const [st, en] = dayRange(k);
+  const logs = S.log.filter(l => l[0] >= st && l[0] < en);
+  const n = logs.length, c = logs.filter(l => l[3]).length;
+  let ms = 0; const ts = logs.map(l => l[0]).sort((a,b) => a - b);
+  ts.forEach((t,i) => { ms += i ? Math.min(t - ts[i-1], 120000) : 15000; });
+  const before = new Set(S.log.filter(l => l[0] < st && l[3]).map(l => String(l[1])));
+  const learned = [...new Set(logs.filter(l => l[3] && !before.has(String(l[1]))).map(l => String(l[1])))].map(findAnyItem).filter(x => x && !x.q);
+  const wrongIds = [...new Set(logs.filter(l => !l[3]).map(l => String(l[1])))];
+  const wrongList = wrongIds.map(id => { const it = findAnyItem(id); if(!it) return null;
+    const mine = logs.filter(l => String(l[1]) === id); const fixed = mine[mine.length-1][3] === 1; return {it, fixed, times:mine.filter(l => !l[3]).length}; }).filter(Boolean);
+  const byType = {}; for(const l of logs){ const b = byType[l[2]] || (byType[l[2]] = {n:0, c:0}); b.n++; if(l[3]) b.c++; }
+  const pats = {}; for(const l of logs) if(!l[3] && l[4] && l[4] !== 'other') pats[l[4]] = (pats[l[4]]||0) + 1;
+  const grad = ((S.grad || {})[k] || []).map(findAnyItem).filter(Boolean);
+  const prevD = new Date(k + 'T12:00:00'); prevD.setDate(prevD.getDate() - 1);
+  const pv = S.days[dayKey(prevD)] || {n:0, c:0};
+  return {k, n, c, acc: n ? Math.round(c/n*100) : null, mins: Math.round(ms/60000), learned, wrongList, byType, pats, grad,
+    prev:{n:pv.n, acc: pv.n ? Math.round(pv.c/pv.n*100) : null}, goalMet: n >= S.goal};
+}
+function dayTitle(k){ const d = new Date(k + 'T12:00:00'); return `${d.getMonth()+1}월 ${d.getDate()}일 (${'일월화수목금토'[d.getDay()]})`; }
+function summaryText(k){
+  const D = daySummary(k);
+  const lines = [`[N5 공부 요약] ${dayTitle(k)}`, `푼 문제 ${D.n}개 · 정답률 ${D.acc ?? '-'}% · 약 ${D.mins}분${D.goalMet ? ' · 목표 달성' : ''}`];
+  if(D.learned.length) lines.push(`새로 맞힌 단어 ${D.learned.length}개: ` + D.learned.slice(0,15).map(w => `${w.w}(${w.ko})`).join(', '));
+  if(D.wrongList.length) lines.push(`틀린 것 ${D.wrongList.length}개: ` + D.wrongList.slice(0,15).map(x => x.it.q ? x.it.point : `${x.it.w}(${x.it.ko})`).join(', '));
+  if(D.grad.length) lines.push(`오답노트 졸업 ${D.grad.length}개: ` + D.grad.map(x => x.w || x.point).join(', '));
+  return lines.join('\n');
+}
+function Summary(){
+  const D = daySummary(sumDay), isToday = sumDay === dayKey();
+  const diff = (a, b, unit) => (a === null || b === null || b === undefined) ? '' : `<small class="delta ${a - b >= 0 ? 'up' : 'down'}">어제보다 ${a - b >= 0 ? '+' : ''}${a - b}${unit}</small>`;
+  const typeRows = Object.keys(TYPES).filter(t => D.byType[t]).map(t => ({label:TYPES[t], value:Math.round(D.byType[t].c/D.byType[t].n*100), max:100, n:D.byType[t].n}));
+  const pats = Object.entries(D.pats).sort((a,b) => b[1] - a[1]);
+  return `<div class="screen">
+    <div class="top"><button class="back" data-go="home">‹ 홈</button><h2>공부 요약</h2><span style="min-width:60px"></span></div>
+    <div class="daynav"><button data-sumnav="-1" aria-label="이전 날">‹</button><b>${isToday ? '오늘 · ' : ''}${dayTitle(sumDay)}</b><button data-sumnav="1" ${isToday ? 'disabled' : ''} aria-label="다음 날">›</button></div>
+    ${!D.n ? `<div class="card empty">${isToday ? '오늘은 아직 푼 문제가 없어요.' : '이 날은 공부 기록이 없어요.'}</div>${isToday ? '<button class="btn primary" id="today">오늘의 학습 시작</button>' : ''}` : `
+    <div class="card">
+      <div class="kpis">
+        <div><span>푼 문제</span><b class="num">${D.n}</b>${diff(D.n, D.prev.n, '')}</div>
+        <div><span>정답률</span><b class="num">${D.acc}<small>%</small></b>${diff(D.acc, D.prev.acc, '%p')}</div>
+        <div><span>공부 시간</span><b class="num">${D.mins}<small>분</small></b></div>
+      </div>
+      <p class="hint" style="margin-top:12px">${D.goalMet ? `하루 목표 ${S.goal}문제 달성.` : `하루 목표까지 ${S.goal - D.n}문제 남았어요.`}${D.learned.length ? ` 새로 맞힌 단어 ${D.learned.length}개,` : ''}${D.grad.length ? ` 오답노트 졸업 ${D.grad.length}개,` : ''} 틀린 것 ${D.wrongList.length}개.</p>
+    </div>
+    ${D.learned.length ? `<div class="sec"><h3>새로 맞힌 단어 <span class="cnt">${D.learned.length}</span></h3>
+      <div class="chips">${D.learned.map(w => `<span class="wchip"><b class="jp">${esc(w.w)}</b><span>${esc(w.ko)}</span></span>`).join('')}</div></div>` : ''}
+    ${D.wrongList.length ? `<div class="sec"><h3>오늘 틀린 것 <span class="cnt red">${D.wrongList.length}</span></h3>
+      <div class="list">${D.wrongList.map(x => `<div class="item"><div class="main">${Row(x.it)}</div><span class="fix ${x.fixed ? 'ok' : ''}">${x.fixed ? '다시 맞힘' : x.times > 1 ? `${x.times}번 틀림` : '복습 필요'}</span></div>`).join('')}</div>
+      ${D.wrongList.some(x => !x.fixed) ? `<button class="btn primary" id="sumRetry">틀린 것 다시 풀기</button>` : ''}</div>` : ''}
+    ${D.grad.length ? `<div class="sec"><h3>오답노트 졸업 <span class="cnt">${D.grad.length}</span></h3>
+      <div class="chips">${D.grad.map(w => `<span class="wchip"><b class="jp">${esc(w.w || w.point)}</b>${w.ko ? `<span>${esc(w.ko)}</span>` : ''}</span>`).join('')}</div></div>` : ''}
+    ${typeRows.length ? `<div class="sec"><h3>유형별 정답률</h3><div class="card">${HBars(typeRows, r => `${r.value}%`)}</div></div>` : ''}
+    ${pats.length ? `<div class="sec"><h3>오늘 한 실수</h3><div class="card"><div class="chips">${pats.map(([k,n]) => `<span class="wchip"><b>${PATTERNS[k] ? PATTERNS[k].label : k}</b><span>${n}회</span></span>`).join('')}</div></div></div>` : ''}
+    <button class="btn plain" id="sumCopy">요약 텍스트 복사</button>
+    <p class="status" id="sumMsg"></p>`}
+  </div>`;
+}
+/* ===== 사용법 ===== */
+const GUIDE = [
+  ['처음 시작하기', true, `
+    <ol>
+      <li><b>앱처럼 설치하기</b> · 아이폰·아이패드 Safari에서 이 페이지를 열고 <b>공유 → 홈 화면에 추가</b>를 누르세요. 앱처럼 열리고, 기록도 잘 지워지지 않아요.</li>
+      <li><b>로그인하기</b> · <b>설정 → 계정 동기화</b>에서 이메일과 비밀번호로 로그인하세요. 로그인하면 아이폰과 태블릿 기록이 자동으로 합쳐져요.</li>
+      <li><b>하루 목표 정하기</b> · <b>설정 → 하루 목표</b>에서 10·20·30·50문제 중 고르세요. 가장 바쁜 날에도 지킬 수 있는 숫자가 좋아요.</li>
+    </ol>`],
+  ['매일 공부하는 순서', true, `
+    <ol>
+      <li>홈에서 <b>오늘의 학습 시작</b>을 누르세요. 오답노트 단어가 먼저 나오고, 나머지는 안 풀어 본 단어로 채워져요.</li>
+      <li>답을 고르면 정답과 해설이 나와요. 읽기·뜻·다른 보기의 뜻까지 확인한 뒤 <b>확인</b>을 눌러 넘어가세요.</li>
+      <li>모르는 문제는 찍지 말고 <b>모르겠어요</b>를 누르세요. 운으로 맞힌 단어는 다시 안 나오지만, 모르겠어요를 누른 단어는 오답노트에 들어가서 다시 나와요.</li>
+      <li>다 풀면 결과 화면에서 <b>틀린 것 다시 풀기</b>로 한 번 더 확인하세요.</li>
+      <li>마지막으로 <b>오늘 공부 요약</b>을 보면서 새로 맞힌 단어와 틀린 단어를 훑어보세요.</li>
+    </ol>`],
+  ['문제 유형', false, `
+    <dl>
+      <dt>뜻</dt><dd>일본어 단어를 보고 한국어 뜻을 골라요. 한자 단어에는 읽기가 같이 나와요.</dd>
+      <dt>읽기</dt><dd>한자를 보고 히라가나 읽기를 골라요. が/か, っ, 장음처럼 헷갈리기 쉬운 보기가 나와요.</dd>
+      <dt>한자</dt><dd>히라가나와 뜻을 보고 맞는 한자를 골라요. 소리가 같은 다른 한자(暑い/熱い)도 보기로 나와요.</dd>
+      <dt>뜻 → 단어</dt><dd>한국어 뜻을 보고 일본어 단어를 골라요.</dd>
+      <dt>로마자</dt><dd>읽는 법을 로마자로 직접 입력해요. shi/si, tsu/tu, chi/ti 모두 정답이고, 장음은 <code>teeburu</code>나 <code>te-buru</code>처럼 쓰면 돼요.</dd>
+      <dt>문법</dt><dd>교재 사진으로 만든 세트에만 있어요. 빈칸에 알맞은 표현을 고르고 해설을 확인해요.</dd>
+    </dl>
+    <p><b>골라서 풀기</b>에서는 유형(섞어서·뜻·읽기·한자·로마자), 범위(전체·안 푼 단어·오답만), 문항 수를 직접 정할 수 있어요.</p>`],
+  ['오답노트', false, `
+    <ul>
+      <li>틀리거나 <b>모르겠어요</b>를 누른 단어가 자동으로 들어가요. 틀린 유형도 같이 기억해서, 다시 풀 때 그 유형으로 나와요.</li>
+      <li>오답노트에서 <b>두 번 연속</b> 맞히면 자동으로 빠져요(졸업).</li>
+      <li>확실히 외운 단어는 <b>외웠음</b> 버튼으로 바로 뺄 수 있어요.</li>
+    </ul>`],
+  ['홈 화면 그래프와 숫자', false, `
+    <ul>
+      <li><b>오늘</b> · 오늘 푼 문제 수 / 하루 목표</li>
+      <li><b>연속</b> · 하루도 빠지지 않고 공부한 날 수. 하루 한 문제라도 풀면 이어져요.</li>
+      <li><b>7일 정답률</b> · 최근 일주일 동안의 정답 비율</li>
+      <li><b>최근 2주 학습량</b> · 날짜별로 푼 문제 수예요. 점선이 하루 목표이고, 막대를 누르면 그날 숫자와 요약 링크가 나와요.</li>
+      <li><b>맞힌 단어</b> · 지금 단어장에서 맞혀 본 단어 수(오답노트에 있는 단어는 빼고 셈)</li>
+    </ul>`],
+  ['공부 요약', false, `
+    <ul>
+      <li>홈의 <b>공부 요약 보기</b> 또는 결과 화면에서 열 수 있어요. ‹ › 버튼으로 지난 날짜도 볼 수 있어요.</li>
+      <li>푼 문제·정답률·공부 시간(대략), 어제와 비교, 새로 맞힌 단어, 틀린 단어(그날 다시 맞혔는지), 오답노트 졸업 단어, 유형별 정답률, 그날 한 실수를 보여 줘요.</li>
+      <li><b>요약 텍스트 복사</b>로 메모나 메신저에 공부 기록을 남길 수 있어요.</li>
+    </ul>`],
+  ['약점 분석', false, `
+    <ul>
+      <li>문제를 10개 이상 풀면 열려요.</li>
+      <li><b>유형별 정답률</b>로 어떤 유형이 약한지 보여 줘요.</li>
+      <li><b>자주 하는 실수</b> · 탁음(゛゜), 촉음(っ), 장음, 요음(ゃゅょ), 같은 소리 다른 한자처럼 틀린 이유를 나눠서 세요. <b>이 실수만 연습하기</b>를 누르면 그 실수가 나오기 쉬운 단어로만 15문제를 풀어요.</li>
+      <li><b>자주 틀리는 단어</b> 10개를 모아 <b>집중 훈련</b>할 수 있어요.</li>
+    </ul>`],
+  ['교재 사진으로 문제 만들기', false, `
+    <ul>
+      <li>책으로 공부한 페이지를 찍어 올리면 그 페이지의 단어와 문법으로 문제 세트를 만들어요. (AI 기능이 연결돼 있을 때)</li>
+      <li>AI 기능이 꺼져 있으면, Claude 채팅에 사진을 보내 <b>세트 코드</b>를 받은 뒤 <b>세트 코드 붙여넣기</b>에 넣으면 똑같이 쓸 수 있어요.</li>
+      <li>만든 세트는 목록에서 <b>풀기</b>로 시작하고, 틀린 문제는 오답노트에 같이 쌓여요.</li>
+    </ul>`],
+  ['단어장 바꾸기·올리기', false, `
+    <ul>
+      <li>홈 맨 위 제목(예: JLPT N5)을 누르면 단어장 화면이 열려요.</li>
+      <li>엑셀(.xlsx)이나 CSV를 올리면 새 단어장이 돼요. 첫 줄에 <b>일본어단어 · 한국어 뜻 · 영어 뜻 · Hiragana</b> 제목이 있으면 순서는 상관없어요.</li>
+      <li>진도와 오답노트는 단어장마다 따로 쌓여요.</li>
+    </ul>`],
+  ['기기 옮기기·동기화', false, `
+    <ul>
+      <li>로그인해 두면 앱을 열 때마다 자동으로 동기화돼요. <b>설정 → 지금 동기화</b>로 바로 맞출 수도 있어요.</li>
+      <li>로그인 없이 옮기려면 <b>설정 → 백업 코드로 옮기기</b>에서 코드를 복사해 다른 기기에서 붙여 넣으세요.</li>
+    </ul>`],
+  ['자주 묻는 질문', false, `
+    <dl>
+      <dt>기록이 사라졌어요</dt><dd>로그인한 상태라면 <b>설정 → 지금 동기화</b>를 눌러 보세요. 로그인하지 않았다면 기록은 그 기기 브라우저에만 있어서, 브라우저 데이터를 지우면 사라져요.</dd>
+      <dt>정답인데 오답 처리됐어요</dt><dd>로마자 입력은 장음과 っ까지 맞아야 정답이에요(예: gakkou). 단어장 데이터 자체가 틀린 경우도 있으니 해설의 읽기를 확인해 주세요.</dd>
+      <dt>키보드로 풀 수 있나요?</dt><dd>태블릿·PC에서는 <kbd>1</kbd>~<kbd>4</kbd>로 보기 선택, <kbd>Enter</kbd>로 확인할 수 있어요.</dd>
+    </dl>`],
+];
+function Guide(){
+  return `<div class="screen">
+    <div class="top"><button class="back" data-go="home">‹ 홈</button><h2>사용법</h2><span style="min-width:60px"></span></div>
+    <div class="guide">${GUIDE.map(([t, open, body]) => `<details class="card" ${open ? 'open' : ''}><summary>${t}</summary><div class="gbody">${body}</div></details>`).join('')}</div>
+    <button class="btn primary" id="today">오늘의 학습 시작</button>
+  </div>`;
+}
 function Settings(){
   return `<div class="screen">
     <div class="top"><button class="back" data-go="home">‹ 홈</button><h2>설정</h2><span style="min-width:60px"></span></div>
+    <button class="btn plain" data-go="guide">사용법 보기</button>
     <div class="opt"><label>하루 목표</label><div class="seg">${[10,20,30,50].map(v => `<button data-goal="${v}" aria-pressed="${S.goal===v}">${v}문제</button>`).join('')}</div></div>
     <div class="opt"><label>단어장</label><button class="btn plain" data-go="books">${esc(bookName())} · ${WORDS.length}단어 — 바꾸기 / 올리기</button></div>
     <div class="opt"><label>계정 동기화 (아이폰 ↔ 태블릿 자동 동기화 · AI 기능)</label>
@@ -854,7 +1036,7 @@ function Settings(){
 }
 
 function render(){
-  app.innerHTML = ({home:Home, setup:Setup, quiz:Quiz, result:Result, note:Note, photo:Photo, settings:Settings, analysis:Analysis, books:Books}[screen] || Home)();
+  app.innerHTML = ({home:Home, setup:Setup, quiz:Quiz, result:Result, note:Note, photo:Photo, settings:Settings, analysis:Analysis, books:Books, summary:Summary, guide:Guide}[screen] || Home)();
   const $ = s => app.querySelector(s), $$ = s => app.querySelectorAll(s);
   $$('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
   const on = (s, f) => { const el = $(s); if(el) el.onclick = f; };
@@ -870,13 +1052,18 @@ function render(){
   }
   on('#retry', () => startQuiz(shuffle(result.filter(l => !l.ok).map(l => ({item:l.item, type:l.type})))));
   on('#review', () => startQuiz(shuffle(noteList().map(it => it.q ? {item:it, type:'grammar'} : itemFor(it, Object.keys(TYPES).filter(t => t !== 'grammar'))))));
-  $$('[data-done]').forEach(b => b.onclick = () => { const r = S.w[b.dataset.done]; r.n = []; r.s = 0; r.t = Date.now(); save(); render(); });
+  $$('[data-done]').forEach(b => b.onclick = () => { const r = S.w[b.dataset.done]; r.n = []; r.s = 0; r.t = Date.now(); markGrad(b.dataset.done); save(); render(); });
   on('#importSet', () => { try{ genMsg = addSet(parseJSON($('#setCode').value)); genErr = false; }catch(e){ genMsg = '코드를 읽지 못했어요. 받은 코드를 그대로 전부 붙여 넣어 주세요.'; genErr = true; } render(); });
   $$('[data-day]').forEach(g => g.onclick = () => { daySel = +g.dataset.day; render(); });
   $$('[data-drill]').forEach(b => b.onclick = () => drillPattern(b.dataset.drill));
   on('#drillTop', () => startQuiz(shuffle(analyze().top.map(x => itemFor(x.it, ['meaning','reading','writing','reverse'])))));
   on('#drillGram', () => { const ids = new Set(S.log.filter(l => !l[3] && l[2] === 'grammar').map(l => l[1])); startQuiz(shuffle(GRAMMAR.filter(g => ids.has(g.id)).map(g => ({item:g, type:'grammar'})))); });
   on('#coach', askCoach);
+  $$('[data-sum]').forEach(b => b.onclick = () => { sumDay = b.dataset.sum; go('summary'); });
+  $$('[data-sumnav]').forEach(b => b.onclick = () => { const d = new Date(sumDay + 'T12:00:00'); d.setDate(d.getDate() + +b.dataset.sumnav); sumDay = dayKey(d); render(); });
+  on('#sumCopy', async () => { const t = summaryText(sumDay), msg = $('#sumMsg');
+    try{ await navigator.clipboard.writeText(t); msg.textContent = '복사했어요. 메모나 메신저에 붙여 넣으세요.'; }catch(e){ msg.textContent = '복사가 안 돼요. 화면을 캡처해 주세요.'; } });
+  on('#sumRetry', () => { const ids = new Set(daySummary(sumDay).wrongList.map(x => String(x.it.id))); startQuiz(shuffle(allWords().filter(w => ids.has(String(w.id))).map(w => itemFor(w, MODES.mix)).concat(GRAMMAR.filter(g => ids.has(g.id)).map(g => ({item:g, type:'grammar'}))))); });
   on('#login', async () => { const email = $('#email').value.trim(), pw = $('#pw').value; if(!email || !pw) return;
     cloudMsg = '로그인 중…'; cloudErr = false; render();
     const {data, error} = await sb.auth.signInWithPassword({email, password:pw});
@@ -927,6 +1114,7 @@ function mergeState(a, b){
   for(const l of [...(a.log||[]), ...(b.log||[])].sort((x,y) => x[0] - y[0])){ const key = l[0] + '|' + l[1]; if(!seen.has(key)){ seen.add(key); m.log.push(l); } }
   m.log = m.log.slice(-4000);
   const union = (x, y) => { const map = new Map(); for(const it of [...(x||[]), ...(y||[])]) if(!dels.has(it.id)) map.set(it.id, it); return [...map.values()]; };
+  for(const src of [a, b]) for(const [k, ids] of Object.entries(src.grad || {})) m.grad[k] = [...new Set([...(m.grad[k]||[]), ...ids])];
   m.sets = union(a.sets, b.sets).sort((x,y) => (y.t||0) - (x.t||0)); m.books = union(a.books, b.books);
   return m;
 }
